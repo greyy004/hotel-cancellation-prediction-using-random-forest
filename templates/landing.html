@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HamroGhar - Hotel Booking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}" />
+</head>
+<body>
+
+<header>
+    <div class="logo">HamroGhar</div>
+    <div class="header-right">
+        <a href="{{ url_for('register') }}">Register</a>
+        <a href="{{ url_for('login') }}" class="btn btn-primary" style="color: white; padding: 0.6rem 1.5rem; font-size: 0.95rem;">Login</a>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="hero-content">
+        <h1>Find Your Perfect Hotel</h1>
+        <p class="hero-subtitle">Browse and book the best hotels at great prices</p>
+        <div class="cta">
+            <a class="btn btn-secondary" href="#rooms">Browse Rooms</a>
+        </div>
+    </div>
+</section>
+
+<section class="rooms-section" id="rooms">
+    <div class="rooms-container">
+        <h2 class="section-title">Featured Rooms</h2>
+        <div class="rooms-grid">
+            <div class="room-card">
+                <img src="{{ url_for('static', filename='uploads/landing_rooms/room1.jpg') }}" alt="Luxury Room">
+                <div class="room-info">
+                    <h3>Luxury Room</h3>
+                    <p>Premium accommodation with modern amenities and stunning views</p>
+                </div>
+            </div>
+            <div class="room-card">
+                <img src="{{ url_for('static', filename='uploads/landing_rooms/room2.jpg') }}" alt="Standard Room">
+                <div class="room-info">
+                    <h3>Standard Room</h3>
+                    <p>Comfortable and affordable for your stay with quality service</p>
+                </div>
+            </div>
+            <div class="room-card">
+                <img src="{{ url_for('static', filename='uploads/landing_rooms/room3.jpg') }}" alt="Suite">
+                <div class="room-info">
+                    <h3>Suite Room</h3>
+                    <p>Spacious rooms with exclusive services and luxury amenities</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-bottom">
+        <p>&copy; 2025 HamroGhar. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>

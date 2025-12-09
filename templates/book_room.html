@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Room {{ room.room_number }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e9ecef;
+            color: #2d3748;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+
+        .back {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            padding: 0.7rem 1.5rem;
+            font-size: 1rem;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .top-bar h1 {
+            font-size: 22px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .room-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .room-info {
+            padding: 25px;
+        }
+
+        .room-info h2 {
+            font-size: 24px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .room-info .room-type {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        .price-tag {
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .price-tag .price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .price-tag .per-night {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .summary-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+            color: #475569;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row span {
+            color: #64748b;
+        }
+
+        .summary-row strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .total-row {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #cbd5e1;
+            font-size: 20px;
+        }
+
+        .total-row strong {
+            color: #16a34a;
+            font-size: 24px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 35px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section h2 {
+            color: #1e293b;
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        input[readonly] {
+            background: #f8fafc;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .note {
+            font-size: 13px;
+            color: #ef4444;
+            margin-top: 6px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #6366f1;
+            color: white;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .room-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-bar {
+                padding: 12px 20px;
+            }
+
+            .top-bar h1 {
+                font-size: 18px;
+            }
+
+            .room-image {
+                height: 200px;
+            }
+
+            .form-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <h1>Room Booking</h1>
+        <a href="{{ url_for('user_dashboard') }}" class="back">Select Room</a>
+    </div>
+
+    <div class="container">
+        <!-- Left Side: Room Preview -->
+        <div class="room-card">
+            {% if room.image_path %}
+            <img src="{{ url_for('static', filename='uploads/rooms/' ~ room.image_path) }}" alt="Room"
+                class="room-image">
+            {% else %}
+            <img src="https://via.placeholder.com/400x250/6366f1/ffffff?text=Room+{{ room.room_number }}" alt="Room"
+                class="room-image">
+            {% endif %}
+
+            <div class="room-info">
+                <h2>Room {{ room.room_number }}</h2>
+                <p class="room-type"><b>{{ room.room_type_name }}</b> - {{ room.description }}</p>
+                
+                <div class="price-tag">
+                    <div class="price">Rs {{ "%.2f"|format(room.price_per_night|default(120)) }}</div>
+                    <div class="per-night">per night</div>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Booking Summary</h3>
+                    <div class="summary-row">
+                        <span>Check-in:</span>
+                        <strong id="display_checkin">—</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Check-out:</span>
+                        <strong id="display_checkout">—</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total Nights:</span>
+                        <strong id="total_nights">0</strong>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>Total Amount:</span>
+                        <strong>Rs <span id="total_cost">0.00</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Booking Form -->
+        <div class="form-card">
+            <form method="POST" action="{{ url_for('book_room', room_id=room.room_id) }}" id="bookingForm">
+
+                <!-- Date Selection -->
+                <div class="section">
+                    <h2>Select Dates</h2>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Check-in Date *</label>
+                            <input type="date" id="checkin" required>
+                            <div class="note" id="checkin-note"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Check-out Date *</label>
+                            <input type="date" id="checkout" required>
+                            <div class="note" id="checkout-note"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden fields -->
+                <input type="hidden" name="no_of_weekend_nights" id="weekend_nights" value="0">
+                <input type="hidden" name="no_of_week_nights" id="week_nights" value="0">
+                <input type="hidden" name="lead_time" id="lead_time" value="0">
+                <input type="hidden" name="arrival_year" id="arrival_year">
+                <input type="hidden" name="arrival_month" id="arrival_month">
+                <input type="hidden" name="arrival_date" id="arrival_date">
+                <input type="hidden" name="avg_price_per_room" value="{{ room.price_per_night|default(120) }}">
+
+                <!-- Guest Details -->
+                <div class="section">
+                    <h2>Guest Information</h2>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Number of Adults *</label>
+                            <input type="number" name="no_of_adults" min="1" max="6" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Children</label>
+                            <input type="number" name="no_of_children" min="0" max="4" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="section">
+                    <h2>Preferences</h2>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Meal Plan *</label>
+                            <select name="meal_plan_id" required>
+                                {% for m in meal_plans %}
+                                <option value="{{ m.meal_plan_id }}">{{ m.meal_plan_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Market Segment *</label>
+                            <select name="market_segment_id" required>
+                                {% for s in segments %}
+                                <option value="{{ s.market_segment_id }}">{{ s.segment_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Special Requests</label>
+                            <input type="number" name="no_of_special_requests" min="0" max="5" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Car Parking</label>
+                            <select name="required_car_parking_space">
+                                <option value="0">Not Required</option>
+                                <option value="1">Required</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden ML fields -->
+                <input type="hidden" name="repeated_guest" value="0">
+                <input type="hidden" name="no_of_previous_cancellations" value="">
+                <input type="hidden" name="no_of_previous_bookings_not_canceled" value="">
+
+                <button type="submit" class="btn-submit">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const checkinInput = document.getElementById('checkin');
+        const checkoutInput = document.getElementById('checkout');
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        checkinInput.min = todayStr;
+        checkoutInput.min = todayStr;
+
+        function updateSummary() {
+            const checkin = checkinInput.value ? new Date(checkinInput.value) : null;
+            const checkout = checkoutInput.value ? new Date(checkoutInput.value) : null;
+            const price = "{{ room.price_per_night }}";
+
+            if (!checkin || !checkout) {
+                document.getElementById('display_checkin').textContent = '—';
+                document.getElementById('display_checkout').textContent = '—';
+                document.getElementById('total_nights').textContent = '0';
+                document.getElementById('total_cost').textContent = '0.00';
+                return;
+            }
+
+            if (checkout <= checkin) {
+                document.getElementById('checkout-note').textContent = 'Check-out must be after check-in';
+                return;
+            } else {
+                document.getElementById('checkout-note').textContent = '';
+            }
+
+            const oneDay = 24 * 60 * 60 * 1000;
+            const nights = Math.round((checkout - checkin) / oneDay);
+
+            let weekendCount = 0;
+            let current = new Date(checkin);
+            for (let i = 0; i < nights; i++) {
+                if (current.getDay() === 5 || current.getDay() === 6) weekendCount++;
+                current.setDate(current.getDate() + 1);
+            }
+            const weeknights = nights - weekendCount;
+
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0, 0);
+            const leadTime = Math.max(0, Math.round((checkin - todayDate) / oneDay));
+
+            document.getElementById('display_checkin').textContent = checkin.toLocaleDateString('en-IN');
+            document.getElementById('display_checkout').textContent = checkout.toLocaleDateString('en-IN');
+            document.getElementById('total_nights').textContent = nights;
+            document.getElementById('total_cost').textContent = (nights * price).toFixed(2);
+
+            document.getElementById('weekend_nights').value = weekendCount;
+            document.getElementById('week_nights').value = weeknights;
+            document.getElementById('lead_time').value = leadTime;
+            document.getElementById('arrival_year').value = checkin.getFullYear();
+            document.getElementById('arrival_month').value = checkin.getMonth() + 1;
+            document.getElementById('arrival_date').value = checkin.getDate();
+        }
+
+        checkinInput.addEventListener('change', updateSummary);
+        checkoutInput.addEventListener('change', updateSummary);
+        updateSummary();
+    </script>
+
+</body>
+
+</html>

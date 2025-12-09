@@ -1,0 +1,240 @@
+/* ================= Global ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f9fafb;
+    color: #1f2937;
+}
+
+/* ================= Dashboard Layout ================= */
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ================= Sidebar ================= */
+.sidebar {
+    width: 220px;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    padding: 2rem 1rem;
+    position: fixed;
+    height: 100vh;
+}
+
+.sidebar h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #2563eb;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar nav a {
+    padding: 0.8rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.sidebar nav a:hover {
+    background: #e0f2fe;
+    color: #2563eb;
+}
+
+.sidebar nav a.logout {
+    margin-top: auto;
+    color: #ef4444;
+}
+
+.sidebar nav a.logout:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* ================= Main Content ================= */
+.main-content {
+    flex: 1;
+    margin-left: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-header {
+    padding: 2rem;
+}
+
+.main-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+/* ================= Stats Cards ================= */
+.stats-section {
+    padding: 1rem 2rem;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.card h3 {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.card p {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+/* ================= Table Cards ================= */
+.recent-bookings-section {
+    padding: 1rem 2rem;
+}
+
+.table-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.table-card h2 {
+    padding: 1rem 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+    color: #111827;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.simple-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+}
+
+/* Table Header */
+.simple-table th {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Table Cells */
+.simple-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Alternate Row Colors */
+.simple-table tbody tr:nth-child(even) {
+    background: #f3f4f6;
+}
+
+/* Hover Effect */
+.simple-table tbody tr:hover {
+    background: #dbeafe;
+    transition: background 0.2s ease;
+}
+
+/* First Column */
+.simple-table td:first-child {
+    font-weight: 600;
+    color: #1e40af;
+}
+
+/* Status Column Colors */
+.simple-table td.status {
+    font-weight: 600;
+}
+
+.simple-table td.status.canceled {
+    color: #ef4444;
+}
+
+.simple-table td.status.active {
+    color: #10b981;
+}
+
+/* Empty state */
+.simple-table tbody tr td[colspan] {
+    text-align: center;
+    color: #9ca3af;
+    padding: 1.5rem;
+    font-style: italic;
+}
+
+/* ================= Responsive ================= */
+@media (max-width:768px) {
+    .sidebar {
+        width: 180px;
+    }
+
+    .main-content {
+        margin-left: 180px;
+    }
+
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width:480px) {
+    .sidebar {
+        width: 150px;
+    }
+
+    .main-content {
+        margin-left: 150px;
+    }
+
+    .simple-table th,
+    .simple-table td {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}

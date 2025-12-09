@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>HamroGhar - User Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}">
+</head>
+
+<body>
+
+<header>
+    <div class="logo">HamroGhar</div>
+    <a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a>
+</header>
+
+<section class="rooms-section">
+    <h2 class="section-title">Available Rooms</h2>
+    <div class="rooms-grid">
+        {% for r in available_rooms %}
+        <div class="room-card">
+            {% if r.image_path %}
+            <img src="{{ url_for('static', filename='uploads/rooms/' ~ r.image_path) }}" alt="Room Image">
+            {% endif %}
+            <div class="room-info">
+                <p><strong>Room Type:</strong> {{ r.room_type_name }}</p>
+                <p><strong>Room Number:</strong> {{ r.room_number }}</p>
+                <p><strong>Price:</strong> {{ r.price_per_night }}</p>
+                <a href="{{ url_for('book_room', room_id=r.room_id) }}" class="btn btn-primary">Book</a>
+            </div>
+        </div>
+        {% else %}
+        <p>No rooms available right now.</p>
+        {% endfor %}
+    </div>
+</section>
+
+</body>
+</html>
