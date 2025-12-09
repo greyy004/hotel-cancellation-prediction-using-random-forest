@@ -295,6 +295,12 @@ def login():
         flash("Invalid credentials", "danger")
     return render_template("login.html")
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out", "success")
+    return redirect(url_for("landing"))
+
 @app.route("/user_dashboard")
 @login_required
 def user_dashboard():
@@ -305,17 +311,180 @@ def user_dashboard():
     available_rooms = []
     conn = get_db_connection()
     available_rooms = conn.execute("""
-        SELECT t1.*, t2.image_path, t2.room_type_name
+        SELECT t1.*, t2.image_path, t2.room_type_name, t2.description
 FROM rooms t1
 LEFT JOIN room_types t2 ON t1.room_type_id = t2.room_type_id;""").fetchall() 
     conn.close()
     return render_template("user_dashboard.html", available_rooms=available_rooms)
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("Logged out", "success")
-    return redirect(url_for("landing"))
+
+# -----------------------
+# BOOK ROOM
+# -----------------------
+@app.route("/book_room/<int:room_id>", methods=["GET", "POST"])
+@login_required
+def book_room(room_id):
+    conn = get_db_connection()
+    
+    # Fetch room details
+    room = conn.execute("""
+        SELECT r.room_id, r.room_number, r.price_per_night, t.room_type_name, t.image_path, t.description
+        FROM rooms r
+        JOIN room_types t ON r.room_type_id = t.room_type_id
+        WHERE r.room_id=?
+    """, (room_id,)).fetchone()
+    
+    if not room:
+        flash("Room not found!", "danger")
+        return redirect(url_for("user_dashboard"))
+
+    meal_plans = conn.execute("SELECT * FROM meal_plans").fetchall()
+    segments = conn.execute("SELECT * FROM market_segments").fetchall()
+
+    customer_id = session["user_id"]
+
+    # === AUTOMATICALLY GET REAL CUSTOMER HISTORY ===
+    prev_bookings = conn.execute("""
+        SELECT booking_status 
+        FROM bookings 
+        WHERE customer_id = ?
+        ORDER BY created_at DESC
+    """, (customer_id,)).fetchall()
+
+    total_previous_bookings = len(prev_bookings)
+    
+    # Count how many were canceled
+    previous_cancellations = sum(1 for b in prev_bookings if b["booking_status"] == "Canceled")
+    
+    # Count how many were NOT canceled (i.e. completed/stayed)
+    previous_successful = sum(1 for b in prev_bookings if b["booking_status"] == "Not_Canceled")
+    
+    # Is this person has booked before?
+    repeated_guest = 1 if total_previous_bookings > 0 else 0
+
+    if request.method == "POST":
+        try:
+            no_of_adults = int(request.form["no_of_adults"])
+            no_of_children = int(request.form["no_of_children"])
+            no_of_weekend_nights = int(request.form["no_of_weekend_nights"])
+            no_of_week_nights = int(request.form["no_of_week_nights"])
+            lead_time = int(request.form["lead_time"])
+            arrival_year = int(request.form["arrival_year"])
+            arrival_month = int(request.form["arrival_month"])
+            arrival_date = int(request.form["arrival_date"])
+            
+            avg_price = float(room["price_per_night"])  # Use actual room price
+            special_requests = int(request.form.get("no_of_special_requests", 0))
+            required_parking = int(request.form.get("required_car_parking_space", 0))
+            meal_plan_id = int(request.form["meal_plan_id"])
+            segment_id = int(request.form["market_segment_id"])
+
+            total_nights = no_of_weekend_nights + no_of_week_nights
+            total_guests = no_of_adults + no_of_children
+
+            conn.execute("""
+                INSERT INTO bookings (
+                    customer_id, room_id, meal_plan_id, market_segment_id, booking_status,
+                    no_of_adults, no_of_children, no_of_weekend_nights, no_of_week_nights,
+                    lead_time, arrival_year, arrival_month, arrival_date,
+                    avg_price_per_room, no_of_special_requests,
+                    repeated_guest, no_of_previous_cancellations, no_of_previous_bookings_not_canceled,
+                    required_car_parking_space, total_nights, total_guests
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, (
+                customer_id, room["room_id"], meal_plan_id, segment_id, "Not_Canceled",
+                no_of_adults, no_of_children, no_of_weekend_nights, no_of_week_nights,
+                lead_time, arrival_year, arrival_month, arrival_date,
+                avg_price, special_requests,
+                repeated_guest, previous_cancellations, previous_successful,
+                required_parking, total_nights, total_guests
+            ))
+            conn.commit()
+            flash(f"Room {room['room_number']} booked successfully!", "success")
+            return redirect(url_for("user_dashboard"))
+
+        except Exception as e:
+            conn.rollback()
+            flash("Booking failed. Please try again.", "danger")
+            print(e)
+
+    conn.close()
+    return render_template(
+        "book_room.html", 
+        room=room, 
+        meal_plans=meal_plans, 
+        segments=segments,
+        repeated_guest=repeated_guest,
+        previous_cancellations=previous_cancellations,
+        previous_successful=previous_successful
+    )
+@app.route("/my_bookings")
+@login_required
+def my_bookings():
+    user_id = session["user_id"]
+    conn = get_db_connection()
+
+    # Fetch user's bookings with room type info and image path
+    bookings = conn.execute("""
+        SELECT b.booking_id,
+               r.room_number,
+               t.room_type_name,
+               s.segment_name,
+               b.no_of_adults,
+               b.no_of_children,
+               b.total_nights,
+               b.total_guests,
+               b.booking_status,
+               b.created_at,
+               b.avg_price_per_room,
+               b.total_nights,
+               t.image_path
+        FROM bookings b
+        LEFT JOIN rooms r ON b.room_id = r.room_id
+        LEFT JOIN room_types t ON r.room_type_id = t.room_type_id
+        LEFT JOIN meal_plans m ON b.meal_plan_id = m.meal_plan_id
+        LEFT JOIN market_segments s ON b.market_segment_id = s.market_segment_id
+        WHERE b.customer_id = ?
+        ORDER BY b.created_at DESC
+    """, (user_id,)).fetchall()
+
+    conn.close()
+    return render_template("my_bookings.html", bookings=bookings)
+
+
+# Cancel booking route
+@app.route("/cancel_booking/<int:booking_id>", methods=["POST"])
+@login_required
+def cancel_booking(booking_id):
+    user_id = session["user_id"]
+    conn = get_db_connection()
+
+    # Check if booking exists and belongs to the logged-in user
+    booking = conn.execute(
+        "SELECT * FROM bookings WHERE booking_id = ? AND customer_id = ?",
+        (booking_id, user_id)
+    ).fetchone()
+
+    if not booking:
+        flash("Booking not found or you are not authorized to cancel it.", "danger")
+        conn.close()
+        return redirect(url_for("my_bookings"))
+
+    if booking["booking_status"] == "Canceled":
+        flash("This booking is already canceled.", "info")
+        conn.close()
+        return redirect(url_for("my_bookings"))
+
+    # Update booking status to Canceled
+    conn.execute(
+        "UPDATE bookings SET booking_status = 'Canceled', updated_at = CURRENT_TIMESTAMP WHERE booking_id = ?",
+        (booking_id,)
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Your booking has been canceled successfully.", "success")
+    return redirect(url_for("my_bookings"))
 
 # -----------------------
 # DASHBOARDS
@@ -542,7 +711,6 @@ def delete_meal_plan(meal_id):
     return redirect(url_for("manage_meal_plans"))
 
 
-
 # -----------------------# ADMIN: MARKET SEGMENTS
 # -----------------------
 
@@ -561,107 +729,6 @@ def manage_market_segments():
     segments = conn.execute("SELECT * FROM market_segments").fetchall()
     conn.close()
     return render_template("manage_market_segments.html", segments=segments)
-
-# -----------------------
-# BOOK ROOM
-# -----------------------
-@app.route("/book_room/<int:room_id>", methods=["GET", "POST"])
-@login_required
-def book_room(room_id):
-    conn = get_db_connection()
-    
-    # Fetch room details
-    room = conn.execute("""
-        SELECT r.room_id, r.room_number, r.price_per_night, t.room_type_name, t.image_path, t.description
-        FROM rooms r
-        JOIN room_types t ON r.room_type_id = t.room_type_id
-        WHERE r.room_id=?
-    """, (room_id,)).fetchone()
-    
-    if not room:
-        flash("Room not found!", "danger")
-        return redirect(url_for("user_dashboard"))
-
-    meal_plans = conn.execute("SELECT * FROM meal_plans").fetchall()
-    segments = conn.execute("SELECT * FROM market_segments").fetchall()
-
-    customer_id = session["user_id"]
-
-    # === AUTOMATICALLY GET REAL CUSTOMER HISTORY ===
-    prev_bookings = conn.execute("""
-        SELECT booking_status 
-        FROM bookings 
-        WHERE customer_id = ?
-        ORDER BY created_at DESC
-    """, (customer_id,)).fetchall()
-
-    total_previous_bookings = len(prev_bookings)
-    
-    # Count how many were canceled
-    previous_cancellations = sum(1 for b in prev_bookings if b["booking_status"] == "Canceled")
-    
-    # Count how many were NOT canceled (i.e. completed/stayed)
-    previous_successful = sum(1 for b in prev_bookings if b["booking_status"] == "Not_Canceled")
-    
-    # Is this person has booked before?
-    repeated_guest = 1 if total_previous_bookings > 0 else 0
-
-    if request.method == "POST":
-        try:
-            no_of_adults = int(request.form["no_of_adults"])
-            no_of_children = int(request.form["no_of_children"])
-            no_of_weekend_nights = int(request.form["no_of_weekend_nights"])
-            no_of_week_nights = int(request.form["no_of_week_nights"])
-            lead_time = int(request.form["lead_time"])
-            arrival_year = int(request.form["arrival_year"])
-            arrival_month = int(request.form["arrival_month"])
-            arrival_date = int(request.form["arrival_date"])
-            
-            avg_price = float(room["price_per_night"])  # Use actual room price
-            special_requests = int(request.form.get("no_of_special_requests", 0))
-            required_parking = int(request.form.get("required_car_parking_space", 0))
-            meal_plan_id = int(request.form["meal_plan_id"])
-            segment_id = int(request.form["market_segment_id"])
-
-            total_nights = no_of_weekend_nights + no_of_week_nights
-            total_guests = no_of_adults + no_of_children
-
-            conn.execute("""
-                INSERT INTO bookings (
-                    customer_id, room_id, meal_plan_id, market_segment_id, booking_status,
-                    no_of_adults, no_of_children, no_of_weekend_nights, no_of_week_nights,
-                    lead_time, arrival_year, arrival_month, arrival_date,
-                    avg_price_per_room, no_of_special_requests,
-                    repeated_guest, no_of_previous_cancellations, no_of_previous_bookings_not_canceled,
-                    required_car_parking_space, total_nights, total_guests
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-            """, (
-                customer_id, room["room_id"], meal_plan_id, segment_id, "Not_Canceled",
-                no_of_adults, no_of_children, no_of_weekend_nights, no_of_week_nights,
-                lead_time, arrival_year, arrival_month, arrival_date,
-                avg_price, special_requests,
-                repeated_guest, previous_cancellations, previous_successful,
-                required_parking, total_nights, total_guests
-            ))
-            conn.commit()
-            flash(f"Room {room['room_number']} booked successfully!", "success")
-            return redirect(url_for("user_dashboard"))
-
-        except Exception as e:
-            conn.rollback()
-            flash("Booking failed. Please try again.", "danger")
-            print(e)
-
-    conn.close()
-    return render_template(
-        "book_room.html", 
-        room=room, 
-        meal_plans=meal_plans, 
-        segments=segments,
-        repeated_guest=repeated_guest,
-        previous_cancellations=previous_cancellations,
-        previous_successful=previous_successful
-    )
 
 # -----------------------
 # ADMIN: DELETE ROOM

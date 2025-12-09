@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: #f9fafb;
+    background: #f3f4f6;
     color: #1f2937;
 }
 
@@ -45,73 +45,69 @@ body {
     padding: 0.8rem 1rem;
     color: #374151;
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: all 0.2s ease-in-out;
 }
 
-.sidebar nav a:hover {
+.sidebar nav a:hover,
+.sidebar nav a.active {
     background: #e0f2fe;
     color: #2563eb;
 }
 
 .sidebar nav a.logout {
     margin-top: auto;
-    color: #ef4444;
+    color: #dc2626;
 }
 
 .sidebar nav a.logout:hover {
     background: #fee2e2;
-    color: #b91c1c;
+    color: #991b1b;
 }
 
 /* ================= Main Content ================= */
 .main-content {
     flex: 1;
     margin-left: 220px;
-    display: flex;
-    flex-direction: column;
-}
-
-.main-header {
     padding: 2rem;
 }
 
 .main-header h1 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
+    margin-bottom: 2rem;
+    color: #111827;
 }
 
 /* ================= Stats Cards ================= */
-.stats-section {
-    padding: 1rem 2rem;
-}
-
 .stats-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .card {
     background: #fff;
+    border-radius: 12px;
     padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-5px);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 .card h3 {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #6b7280;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .card p {
@@ -121,10 +117,6 @@ body {
 }
 
 /* ================= Table Cards ================= */
-.recent-bookings-section {
-    padding: 1rem 2rem;
-}
-
 .table-card {
     background: #fff;
     border-radius: 12px;
@@ -134,7 +126,7 @@ body {
 }
 
 .table-card h2 {
-    padding: 1rem 1.5rem;
+    padding: 1.5rem;
     font-size: 1.3rem;
     font-weight: 600;
     border-bottom: 1px solid #e5e7eb;
@@ -147,94 +139,92 @@ body {
 
 .simple-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     font-size: 0.9rem;
 }
 
-/* Table Header */
 .simple-table th {
-    background: #2563eb;
-    color: #fff;
-    font-weight: 600;
+    background: #f9f9f9;
+    padding: 1rem;
     text-align: left;
-    padding: 0.75rem 1rem;
+    font-weight: 600;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 10;
 }
 
-/* Table Cells */
 .simple-table td {
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     border-bottom: 1px solid #e5e7eb;
+    color: #555;
 }
 
-/* Alternate Row Colors */
 .simple-table tbody tr:nth-child(even) {
-    background: #f3f4f6;
+    background: #f9fafb;
 }
 
-/* Hover Effect */
 .simple-table tbody tr:hover {
     background: #dbeafe;
     transition: background 0.2s ease;
 }
 
-/* First Column */
 .simple-table td:first-child {
     font-weight: 600;
     color: #1e40af;
 }
 
-/* Status Column Colors */
-.simple-table td.status {
-    font-weight: 600;
-}
-
-.simple-table td.status.canceled {
-    color: #ef4444;
-}
-
-.simple-table td.status.active {
-    color: #10b981;
-}
-
-/* Empty state */
+/* Empty table state */
 .simple-table tbody tr td[colspan] {
     text-align: center;
     color: #9ca3af;
-    padding: 1.5rem;
     font-style: italic;
+    padding: 2rem 1rem;
 }
 
 /* ================= Responsive ================= */
-@media (max-width:768px) {
+@media (max-width: 768px) {
     .sidebar {
         width: 180px;
     }
 
     .main-content {
         margin-left: 180px;
+        padding: 1.5rem;
     }
 
     .stats-cards {
         grid-template-columns: 1fr;
     }
+
+    .simple-table th,
+    .simple-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
 }
 
-@media (max-width:480px) {
+@media (max-width: 480px) {
     .sidebar {
         width: 150px;
     }
 
     .main-content {
         margin-left: 150px;
+        padding: 1rem;
+    }
+
+    .card p {
+        font-size: 1.5rem;
+    }
+
+    .table-card h2 {
+        padding: 1rem;
+        font-size: 1.1rem;
     }
 
     .simple-table th,
     .simple-table td {
-        padding: 0.6rem 0.8rem;
-        font-size: 0.8rem;
+        padding: 0.6rem;
+        font-size: 0.75rem;
     }
 }

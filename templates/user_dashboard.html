@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HamroGhar - User Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}">
 </head>
-
 <body>
 
-<header>
-    <div class="logo">HamroGhar</div>
-    <a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a>
-</header>
+<nav class="navbar">
+    <h1>HamroGhar</h1>
+    <div class="nav-links">
+        <a href="{{ url_for('my_bookings') }}" class="nav-link">My bookings</a>
+        <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+    </div>
+</nav>
 
 <section class="rooms-section">
     <h2 class="section-title">Available Rooms</h2>
@@ -23,14 +25,17 @@
             <img src="{{ url_for('static', filename='uploads/rooms/' ~ r.image_path) }}" alt="Room Image">
             {% endif %}
             <div class="room-info">
+                <p><strong>Description:</strong> <span style="color: rgba(87, 87, 87, 0.904); font-weight: 600; font-size: 0.9rem;">{{ r.description }}</span></p>
                 <p><strong>Room Type:</strong> {{ r.room_type_name }}</p>
                 <p><strong>Room Number:</strong> {{ r.room_number }}</p>
-                <p><strong>Price:</strong> {{ r.price_per_night }}</p>
+                <p><strong>Price:</strong> Rs. {{ r.price_per_night }}</p>
                 <a href="{{ url_for('book_room', room_id=r.room_id) }}" class="btn btn-primary">Book</a>
             </div>
         </div>
         {% else %}
-        <p>No rooms available right now.</p>
+        <div class="empty-state">
+            <p>No rooms available right now.</p>
+        </div>
         {% endfor %}
     </div>
 </section>
