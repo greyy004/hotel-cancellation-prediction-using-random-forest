@@ -1,30 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Register - HamroGhar</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}" />
 </head>
+
 <body class="auth-page">
     <div class="auth-card">
         <h2>Create an account</h2>
-        <form method="post" action="{{ url_for('register') }}">
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+        <form id="registerForm" method="post" action="{{ url_for('register') }}">
             <div>
-                <label for="name">Name</label>
-                <input id="name" name="name" type="text" required>
+                <label for="name">Full Name</label>
+                <input id="name" name="name" type="text" required minlength="2">
+                <span class="error" id="name-error"></span>
+            </div>
+            <div>
+                <label for="phone">Phone</label>
+                <input id="phone" name="phone" type="tel">
+                <span class="error" id="phone-error"></span>
             </div>
             <div>
                 <label for="email">Email</label>
                 <input id="email" name="email" type="email" required>
+                <span class="error" id="email-error"></span>
+            </div>
+            <div>
+                <label for="address">Address</label>
+                <input id="address" name="address" type="text" required minlength="5">
+                <span class="error" id="address-error"></span>
             </div>
             <div>
                 <label for="password">Password</label>
-                <input id="password" name="password" type="password" required>
+                <input id="password" name="password" type="password" required minlength="8">
+                <span class="error" id="password-error"></span>
+            </div>
+            <div>
+                <label for="confirm_password">Confirm Password</label>
+                <input id="confirm_password" name="confirm_password" type="password" required>
+                <span class="error" id="confirm-password-error"></span>
             </div>
             <button type="submit">Register</button>
         </form>
         <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
     </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+
+            // Full Name
+            const name = document.getElementById('name').value.trim();
+            if (name.length < 5) {
+                document.getElementById('name-error').textContent = 'Name must be at least 5 characters';
+                isValid = false;
+            }
+
+            // Email
+            const email = document.getElementById('email').value.trim();
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                document.getElementById('email-error').textContent = 'Please enter a valid email';
+                isValid = false;
+            }
+
+            // Phone (optional, but if entered → must be valid Nepali 10-digit)
+            const phone = document.getElementById('phone').value.replace(/\D/g, '');
+            if (phone && !/^9[78]\d{8}$/.test(phone)) {
+                document.getElementById('phone-error').textContent = 'Enter a valid 10-digit Nepali number';
+                isValid = false;
+            }
+
+            // Address (required, min 5 chars)
+            const address = document.getElementById('address').value.trim();
+            if (address.length < 5) {
+                document.getElementById('address-error').textContent = 'Address must be at least 5 characters';
+                isValid = false;
+            }
+
+            // Password - get the value first
+            const password = document.getElementById('password').value;
+
+            if (password.length < 8) {
+                document.getElementById('password-error').textContent = 'Password must be at least 8 characters';
+                isValid = false;
+            } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+                // at least one letter AND one number
+                document.getElementById('password-error').textContent = 'Password must contain both letters and numbers';
+                isValid = false;
+            }
+
+            // Confirm Password
+            const confirmPassword = document.getElementById('confirm_password').value;
+            if (password !== confirmPassword) {
+                document.getElementById('confirm-password-error').textContent = 'Passwords do not match';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault(); // stop submission
+            }
+        });
+
+
+        const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(msg => {
+        setTimeout(() => {
+            msg.style.transition = "opacity 0.5s ease";
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 500);
+        }, 3000);
+    });
+    </script>
 </body>
+
 </html>

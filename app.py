@@ -5,7 +5,8 @@ import pickle
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from flask import Flask, request, render_template, redirect, url_for, flash, session
+from flask import Flask, request, render_template, redirect, url_for, flash, session, get_flashed_messages
+
 import pandas as pd
 
 # -----------------------
@@ -41,6 +42,8 @@ def init_db():
             customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
+            phone TEXT,
+            address TEXT,
             password TEXT NOT NULL,
             is_admin INTEGER DEFAULT 0
         )
@@ -190,9 +193,9 @@ if os.path.exists(FEATURE_COLS_PATH):
 # that your LabelEncoders were trained on (e.g. "Meal Plan 1", "Room_Type 1", "Online").
 # Update these dictionaries to reflect your actual DB values.
 MEAL_MAP = {
-    "Breakfast Only": "Meal Plan 1",
-    "Full Board": "Meal Plan 2",
-    "Half Board": "Meal Plan 3",
+    "Mixed": "Meal Plan 1",
+    "Veg": "Meal Plan 2",
+    "Non Veg": "Meal Plan 3",
     "No Meal": "Not Selected",
 }
 ROOM_MAP = {
@@ -256,19 +259,35 @@ def map_and_encode(db_value, mapping_dict, encoder, default_model_cat=None):
 # -----------------------
 @app.route("/")
 def landing():
-    return render_template("landing.html")
+    available_rooms = []
+    conn = get_db_connection()
+    available_rooms = conn.execute("""
+        SELECT t1.*, t2.image_path, t2.room_type_name, t2.description
+        FROM rooms t1
+        LEFT JOIN room_types t2 ON t1.room_type_id = t2.room_type_id;""").fetchall() 
+    conn.close()
+    return render_template("landing.html", available_rooms=available_rooms)
+    
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out", "success")
+    return redirect(url_for("landing"))
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         name = request.form["name"]
         email = request.form["email"]
+        phone = request.form["phone"]
+        address = request.form["address"]
         password_hash = generate_password_hash(request.form["password"])
         conn = get_db_connection()
         try:
             conn.execute(
-                "INSERT INTO customers (name, email, password) VALUES (?, ?, ?)",
-                (name, email, password_hash)
+                "INSERT INTO customers (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)",
+                (name, email, phone, address, password_hash)
             )
             conn.commit()
             flash("Registration successful! You can now login.", "success")
@@ -279,14 +298,21 @@ def register():
             conn.close()
     return render_template("register.html")
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
+        name = request.form["name"].strip()
+        email = request.form["email"].strip()
         password = request.form["password"]
+
         conn = get_db_connection()
-        user = conn.execute("SELECT * FROM customers WHERE email=?", (email,)).fetchone()
+        user = conn.execute(
+            "SELECT * FROM customers WHERE email=? AND name=?",
+            (email, name)
+        ).fetchone()
         conn.close()
+
         if user and check_password_hash(user["password"], password):
             session["user_id"] = user["customer_id"]
             session["is_admin"] = bool(user["is_admin"])
@@ -295,18 +321,13 @@ def login():
         flash("Invalid credentials", "danger")
     return render_template("login.html")
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("Logged out", "success")
-    return redirect(url_for("landing"))
-
 @app.route("/user_dashboard")
 @login_required
 def user_dashboard():
     if session.get("is_admin"):
         flash("User access required.", "danger")
         return redirect(url_for("admin_dashboard"))
+    session.pop('_flashes', None)
     # Add logic to fetch user-specific data here
     available_rooms = []
     conn = get_db_connection()
@@ -317,6 +338,37 @@ LEFT JOIN room_types t2 ON t1.room_type_id = t2.room_type_id;""").fetchall()
     conn.close()
     return render_template("user_dashboard.html", available_rooms=available_rooms)
 
+
+@app.route("/user_profile", methods=["GET", "POST"])
+@login_required
+def user_profile():
+    user_id = session["user_id"]
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM customers WHERE customer_id = ?", (user_id,)).fetchone()
+
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        phone = request.form["phone"].strip()
+        address = request.form["address"].strip()
+        current_password = request.form["current_password"]
+
+        # Check password
+        if not check_password_hash(user["password"], current_password):
+            flash("Incorrect current password!", "danger")
+            return redirect(url_for("user_profile"))
+
+        # Update user info
+        conn.execute("""
+            UPDATE customers
+            SET name = ?, phone = ?, address = ?
+            WHERE customer_id = ?
+        """, (name, phone, address, user_id))
+        conn.commit()
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("user_profile"))
+
+    conn.close()
+    return render_template("user_profile.html", user=user)
 
 # -----------------------
 # BOOK ROOM

@@ -1,44 +1,338 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HamroGhar - User Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            color: #1e293b;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ================= Flash Messages ================= */
+        .flash-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        .flash-message {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            opacity: 1;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .flash-message.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .flash-message.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        /* ================= Sidebar ================= */
+        .sidebar {
+            width: 220px;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            padding: 2rem 1rem;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .sidebar h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #2563eb;
+        }
+
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar nav a {
+            padding: 0.8rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .sidebar nav a:hover,
+        .sidebar nav a.active {
+            background: #e0f2fe;
+            color: #2563eb;
+        }
+
+        .sidebar nav a.logout {
+            margin-top: auto;
+            color: #dc2626;
+        }
+
+        .sidebar nav a.logout:hover {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* ================= Main Content ================= */
+        .rooms-section {
+            flex: 1;
+            margin-left: 220px;
+            padding: 40px 20px;
+            width: calc(100% - 220px);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 2.5rem;
+            letter-spacing: -1px;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f1f5f9;
+        }
+
+        .room-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+            border-color: #e0e7ff;
+        }
+
+        .room-card img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.4s ease;
+        }
+
+        .room-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .room-info {
+            padding: 2rem;
+        }
+
+        .room-info p {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .room-info p strong {
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .room-info p:first-child {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .room-info p:first-child span {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.85rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            letter-spacing: 0.3px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            /* Keeping class for template compatibility */
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .empty-state p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        /* ================= Responsive Design ================= */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .sidebar nav {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+            .rooms-section {
+                margin-left: 0;
+                margin: 20px auto;
+            }
+
+            .rooms-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<nav class="navbar">
-    <h1>HamroGhar</h1>
-    <div class="nav-links">
-        <a href="{{ url_for('my_bookings') }}" class="nav-link">My bookings</a>
-        <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
-    </div>
-</nav>
-
-<section class="rooms-section">
-    <h2 class="section-title">Available Rooms</h2>
-    <div class="rooms-grid">
-        {% for r in available_rooms %}
-        <div class="room-card">
-            {% if r.image_path %}
-            <img src="{{ url_for('static', filename='uploads/rooms/' ~ r.image_path) }}" alt="Room Image">
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>User Dashboard</h2>
+            <nav>
+                <a href="{{ url_for('user_dashboard') }}" class="active">Dashboard</a>
+                <a href="{{ url_for('my_bookings') }}">My Bookings</a>
+                <a href="{{ url_for('user_profile') }}">Profile</a>
+                <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+            </nav>
+        </aside>
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
             {% endif %}
-            <div class="room-info">
-                <p><strong>Description:</strong> <span style="color: rgba(87, 87, 87, 0.904); font-weight: 600; font-size: 0.9rem;">{{ r.description }}</span></p>
-                <p><strong>Room Type:</strong> {{ r.room_type_name }}</p>
-                <p><strong>Room Number:</strong> {{ r.room_number }}</p>
-                <p><strong>Price:</strong> Rs. {{ r.price_per_night }}</p>
-                <a href="{{ url_for('book_room', room_id=r.room_id) }}" class="btn btn-primary">Book</a>
+            {% endwith %}
+        </div>
+        <section class="rooms-section">
+            <h2 class="section-title">Available Rooms</h2>
+            <div class="rooms-grid">
+                {% for r in available_rooms %}
+                <div class="room-card">
+                    {% if r.image_path %}
+                    <img src="{{ url_for('static', filename='uploads/rooms/' ~ r.image_path) }}" alt="Room Image">
+                    {% endif %}
+                    <div class="room-info">
+                        <p><strong>Description:</strong> <span
+                                style="color: rgba(87, 87, 87, 0.904); font-weight: 600; font-size: 0.9rem;">{{
+                                r.description }}</span></p>
+                        <p><strong>Room Type:</strong> {{ r.room_type_name }}</p>
+                        <p><strong>Room Number:</strong> {{ r.room_number }}</p>
+                        <p><strong>Price:</strong> Rs. {{ r.price_per_night }}</p>
+                        <a href="{{ url_for('book_room', room_id=r.room_id) }}" class="btn btn-primary">Book</a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No rooms available right now.</p>
+                </div>
+                {% endfor %}
             </div>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <p>No rooms available right now.</p>
-        </div>
-        {% endfor %}
+        </section>
     </div>
-</section>
-
+    <script>
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(msg => {
+            setTimeout(() => {
+                msg.style.transition = "opacity 0.5s ease";
+                msg.style.opacity = "0";
+                setTimeout(() => msg.remove(), 500);
+            }, 3000);
+        });
+    </script>
 </body>
+
 </html>

@@ -15,7 +15,7 @@
             <h2>Admin</h2>
             <nav>
                 <a href="{{ url_for('admin_dashboard') }}" class="active">Dashboard</a>
-                <a href="{{ url_for('manage_room_types') }}">Room Types</a>
+                <a href="{{ url_for('manage_room_types') }}">Room categories</a>
                 <a href="{{ url_for('manage_rooms') }}">Rooms</a>
                 <a href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
                 <a href="{{ url_for('manage_market_segments') }}">Segments</a>
@@ -28,7 +28,15 @@
             <header class="main-header">
                 <h1>Welcome, Admin</h1>
             </header>
-
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
             <!-- Stats Cards -->
             <section class="stats-section">
                 <div class="stats-cards">
@@ -123,6 +131,23 @@
 
         </main>
     </div>
+    <script>
+        // Wait until the DOM is loaded
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all flash messages
+            const flashMessages = document.querySelectorAll('.flash-message');
+
+            flashMessages.forEach(msg => {
+                // Set a timer to remove each message after 3 seconds (3000ms)
+                setTimeout(() => {
+                    msg.style.transition = "opacity 0.5s ease";
+                    msg.style.opacity = "0"; // fade out
+                    setTimeout(() => msg.remove(), 500); // remove after fade
+                }, 3000);
+            });
+        });
+    </script>
+
 </body>
 
 </html>

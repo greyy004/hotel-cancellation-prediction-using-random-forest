@@ -1,60 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Booking Features - {{ booking.booking_id }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_booking_features.css') }}">
 </head>
+
 <body>
 
-<div class="dashboard">
-    <aside class="sidebar">
-        <h2>Admin</h2>
-        <nav>
-            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('manage_room_types') }}">Room Types</a>
-            <a href="{{ url_for('manage_rooms') }}">Rooms</a>
-            <a href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
-            <a href="{{ url_for('manage_market_segments') }}">Segments</a>
-            <a href="{{ url_for('admin_view_bookings') }}" class="active">Bookings</a>
-            <a href="{{ url_for('logout') }}" class="logout">Logout</a>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <header class="main-header">
-            <h1>Booking Features</h1>
-        </header>
-
-        <div class="container">
-            <div class="container-header">
-                <h2>Booking ID: {{ booking.booking_id }}</h2>
-                <a href="{{ url_for('admin_view_bookings') }}" class="back-btn">Back to Bookings</a>
-            </div>
-            
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for key, value in features.items() %}
-                        <tr>
-                            <td>{{ key }}</td>
-                            <td>{{ value }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>Admin</h2>
+            <nav>
+                <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('manage_room_types') }}">Room categories</a>
+                <a href="{{ url_for('manage_rooms') }}">Rooms</a>
+                <a href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
+                <a href="{{ url_for('manage_market_segments') }}">Segments</a>
+                <a href="{{ url_for('admin_view_bookings') }}" class="active">Bookings</a>
+                <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+            </nav>
+        </aside>
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
         </div>
-    </main>
-</div>
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Booking Features</h1>
+            </header>
+
+            <div class="container">
+                <div class="container-header">
+                    <h2>Booking ID: {{ booking.booking_id }}</h2>
+                    <a href="{{ url_for('admin_view_bookings') }}" class="back-btn">Back to Bookings</a>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in features.items() %}
+                            <tr>
+                                <td>{{ key }}</td>
+                                <td>{{ value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Wait until the DOM is loaded
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all flash messages
+            const flashMessages = document.querySelectorAll('.flash-message');
+
+            flashMessages.forEach(msg => {
+                // Set a timer to remove each message after 3 seconds (3000ms)
+                setTimeout(() => {
+                    msg.style.transition = "opacity 0.5s ease";
+                    msg.style.opacity = "0"; // fade out
+                    setTimeout(() => msg.remove(), 500); // remove after fade
+                }, 3000);
+            });
+        });
+    </script>
 
 </body>
+
 </html>

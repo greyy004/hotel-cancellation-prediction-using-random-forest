@@ -1,57 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Market Segments</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/manage_market_segments.css') }}">
 </head>
+
 <body>
 
-<div class="dashboard">
-    <aside class="sidebar">
-        <h2>Admin</h2>
-        <nav>
-            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('manage_room_types') }}">Room Types</a>
-            <a href="{{ url_for('manage_rooms') }}">Rooms</a>
-            <a href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
-            <a href="{{ url_for('manage_market_segments') }}" class="active">Segments</a>
-            <a href="{{ url_for('admin_view_bookings') }}">Bookings</a>
-            <a href="{{ url_for('logout') }}" class="logout">Logout</a>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <header class="main-header">
-            <h1>Market Segments</h1>
-        </header>
-
-        <div class="container">
-            <!-- Add Market Segment Form -->
-            <div class="card">
-                <form method="post">
-                    <div class="form-group">
-                        <input name="segment_name" placeholder="Segment name" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Segment</button>
-                </form>
-            </div>
-
-            <!-- Existing Market Segments -->
-            <div class="card">
-                <ul class="list">
-                    {% for s in segments %}
-                    <li>{{ s.segment_name }}</li>
-                    {% else %}
-                    <li class="empty-state">No segments yet</li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>Admin</h2>
+            <nav>
+                <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('manage_room_types') }}">Room categories</a>
+                <a href="{{ url_for('manage_rooms') }}">Rooms</a>
+                <a href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
+                <a href="{{ url_for('manage_market_segments') }}" class="active">Segments</a>
+                <a href="{{ url_for('admin_view_bookings') }}">Bookings</a>
+                <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+            </nav>
+        </aside>
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
         </div>
-    </main>
-</div>
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Market Segments</h1>
+            </header>
 
+            <div class="container">
+                <!-- Add Market Segment Form -->
+                <div class="card">
+                    <form method="post">
+                        <div class="form-group">
+                            <input name="segment_name" placeholder="Segment name" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Segment</button>
+                    </form>
+                </div>
+
+                <!-- Existing Market Segments -->
+                <div class="card">
+                    <ul class="list">
+                        {% for s in segments %}
+                        <li>{{ s.segment_name }}</li>
+                        {% else %}
+                        <li class="empty-state">No segments yet</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+<script>
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(msg => {
+        setTimeout(() => {
+            msg.style.transition = "opacity 0.5s ease";
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 500);
+        }, 3000);
+    });
+</script>
 </body>
+
 </html>

@@ -15,7 +15,7 @@
             <h2>Admin</h2>
             <nav>
                 <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('manage_room_types') }}" class="active">Room Types</a>
+                <a href="{{ url_for('manage_room_types') }}" class="active">Room categories</a>
                 <a href="{{ url_for('manage_rooms') }}">Rooms</a>
                 <a href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
                 <a href="{{ url_for('manage_market_segments') }}">Segments</a>
@@ -23,7 +23,15 @@
                 <a href="{{ url_for('logout') }}" class="logout">Logout</a>
             </nav>
         </aside>
-
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
         <main class="main-content">
             <header class="main-header">
                 <h1>Manage Room Types</h1>
@@ -95,6 +103,16 @@
             </div>
         </main>
     </div>
+<script>
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(msg => {
+        setTimeout(() => {
+            msg.style.transition = "opacity 0.5s ease";
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 500);
+        }, 3000);
+    });
+</script>
 </body>
 
 </html>

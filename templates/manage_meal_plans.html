@@ -18,7 +18,7 @@
             <h2>Admin</h2>
             <nav>
                 <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('manage_room_types') }}">Room Types</a>
+                <a href="{{ url_for('manage_room_types') }}">Room categories</a>
                 <a href="{{ url_for('manage_rooms') }}">Rooms</a>
                 <a class="active" href="{{ url_for('manage_meal_plans') }}">Meal Plans</a>
                 <a href="{{ url_for('manage_market_segments') }}">Segments</a>
@@ -26,7 +26,15 @@
                 <a href="{{ url_for('logout') }}" class="logout">Logout</a>
             </nav>
         </aside>
-
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
         <!-- Main Content -->
         <main class="main-content">
 
@@ -40,7 +48,8 @@
                 <form method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="meal_plan_name">Meal Plan Name</label>
-                        <input type="text" name="meal_plan_name" id="meal_plan_name" placeholder="e.g., Breakfast Included" required>
+                        <input type="text" name="meal_plan_name" id="meal_plan_name"
+                            placeholder="e.g., Breakfast Included" required>
                     </div>
 
                     <div class="form-group">
@@ -63,7 +72,8 @@
 
                         <div class="meal-img-container">
                             {% if m.image_path %}
-                            <img src="{{ url_for('static', filename='uploads/rooms/' + m.image_path) }}" alt="{{ m.meal_plan_name }}" class="meal-img">
+                            <img src="{{ url_for('static', filename='uploads/rooms/' + m.image_path) }}"
+                                alt="{{ m.meal_plan_name }}" class="meal-img">
                             {% else %}
                             <div class="meal-icon">🍽️</div>
                             {% endif %}
@@ -73,7 +83,8 @@
                             <h3>{{ m.meal_plan_name }}</h3>
 
                             <div class="meal-actions">
-                                <a href="{{ url_for('delete_meal_plan', meal_id=m.meal_plan_id) }}" onclick="return confirm('Delete this meal plan?')" class="btn-delete">Delete</a>
+                                <a href="{{ url_for('delete_meal_plan', meal_id=m.meal_plan_id) }}"
+                                    onclick="return confirm('Delete this meal plan?')" class="btn-delete">Delete</a>
                             </div>
                         </div>
 
@@ -91,7 +102,16 @@
 
         </main>
     </div>
-
+<script>
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(msg => {
+        setTimeout(() => {
+            msg.style.transition = "opacity 0.5s ease";
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 500);
+        }, 3000);
+    });
+</script>
 </body>
 
 </html>

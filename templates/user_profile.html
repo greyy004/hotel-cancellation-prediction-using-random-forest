@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - HamroGhar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_profile.css') }}">
+</head>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>User Dashboard</h2>
+            <nav>
+                <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('my_bookings') }}">My Bookings</a>
+                <a href="{{ url_for('user_profile') }}" class="active">Profile</a>
+                <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <div class="profile-card">
+                <h2>User Profile</h2>
+
+                <div class="flash-container">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <form method="POST" id="profileForm" action="{{ url_for('user_profile') }}">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" value="{{ user['name'] }}" required>
+                    <small class="error" id="name-error" style="color:red;"></small>
+
+                    <label for="phone">Phone</label>
+                    <input type="text" id="phone" name="phone" value="{{ user['phone'] }}">
+                    <small class="error" id="phone-error" style="color:red;"></small>
+
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" value="{{ user['address'] }}" required>
+                    <small class="error" id="address-error" style="color:red;"></small>
+
+                    <label for="current_password">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                    <small class="error" id="password-error" style="color:red;"></small>
+
+                    <button type="submit">Update Profile</button>
+                </form>
+
+                <script>
+                    document.getElementById('profileForm').addEventListener('submit', function (e) {
+                        let isValid = true;
+
+                        // Clear previous errors
+                        document.querySelectorAll('.error').forEach(el => el.textContent = '');
+
+                        // Full Name
+                        const name = document.getElementById('name').value.trim();
+                        if (name.length < 5) {
+                            document.getElementById('name-error').textContent = 'Name must be at least 5 characters';
+                            isValid = false;
+                        }
+
+                        // Phone (optional, Nepali 10-digit starting with 98 or 97)
+                        const phone = document.getElementById('phone').value.replace(/\D/g, '');
+                        if (phone && !/^9[78]\d{8}$/.test(phone)) {
+                            document.getElementById('phone-error').textContent = 'Enter a valid 10-digit Nepali number';
+                            isValid = false;
+                        }
+
+                        // Address (required, min 5 chars)
+                        const address = document.getElementById('address').value.trim();
+                        if (address.length < 5) {
+                            document.getElementById('address-error').textContent = 'Address must be at least 5 characters';
+                            isValid = false;
+                        }
+
+                        // Current Password
+                        const currentPassword = document.getElementById('current_password').value;
+                        if (currentPassword.length < 8) {
+                            document.getElementById('password-error').textContent = 'Password must be at least 8 characters';
+                            isValid = false;
+                        } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(currentPassword)) {
+                            document.getElementById('password-error').textContent = 'Password must contain both letters and numbers';
+                            isValid = false;
+                        }
+
+                        if (!isValid) e.preventDefault(); // stop submission
+                    });
+
+
+                    const flashMessages = document.querySelectorAll('.flash-message');
+                    flashMessages.forEach(msg => {
+                        setTimeout(() => {
+                            msg.style.transition = "opacity 0.5s ease";
+                            msg.style.opacity = "0";
+                            setTimeout(() => msg.remove(), 500);
+                        }, 3000);
+                    });
+                </script>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

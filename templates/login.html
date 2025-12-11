@@ -1,26 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Login - HamroGhar</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}" />
 </head>
+
 <body class="auth-page">
     <div class="auth-card">
         <h2>Login</h2>
-        <form method="post" action="{{ url_for('login') }}">
+        <div class="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+        <form method="post" id="loginForm" action="{{ url_for('login') }}">
+            <div>
+                <label for="name">Full Name</label>
+                <input id="name" name="name" type="text" required>
+                <p class="error" id="name-error"></p>
+            </div>
             <div>
                 <label for="email">Email</label>
                 <input id="email" name="email" type="email" required>
+                <p class="error" id="email-error"></p>
             </div>
             <div>
                 <label for="password">Password</label>
                 <input id="password" name="password" type="password" required>
+                <p class="error" id="password-error"></p>
             </div>
             <button type="submit">Login</button>
         </form>
         <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
     </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+
+            // Full Name
+            const name = document.getElementById('name').value.trim();
+            if (name.length < 5) {
+                document.getElementById('name-error').textContent = 'Name must be at least 5 characters';
+                isValid = false;
+            }
+
+            // Email
+            const email = document.getElementById('email').value.trim();
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                document.getElementById('email-error').textContent = 'Please enter a valid email';
+                isValid = false;
+            }
+
+            // Password - get the value first
+            const password = document.getElementById('password').value;
+
+            if (password.length < 8) {
+                document.getElementById('password-error').textContent = 'Password must be at least 8 characters';
+                isValid = false;
+            } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+                // at least one letter AND one number
+                document.getElementById('password-error').textContent = 'Password must contain both letters and numbers';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault(); // stop submission
+            }
+        });
+
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(msg => {
+            setTimeout(() => {
+                msg.style.transition = "opacity 0.5s ease";
+                msg.style.opacity = "0";
+                setTimeout(() => msg.remove(), 500);
+            }, 3000);
+        });
+    </script>
 </body>
+
 </html>

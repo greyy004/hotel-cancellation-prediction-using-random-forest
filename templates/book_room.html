@@ -14,7 +14,15 @@
         <h1>Room Booking</h1>
         <a href="{{ url_for('user_dashboard') }}" class="back">Select Room</a>
     </div>
-
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
     <div class="container">
         <!-- Left Side: Room Preview -->
         <div class="room-card">
@@ -29,7 +37,7 @@
             <div class="room-info">
                 <h2>Room {{ room.room_number }}</h2>
                 <p class="room-type"><b>{{ room.room_type_name }}</b> - {{ room.description }}</p>
-                
+
                 <div class="price-tag">
                     <div class="price">Rs {{ "%.2f"|format(room.price_per_night|default(120)) }}</div>
                     <div class="per-night">per night</div>
@@ -206,6 +214,15 @@
         checkinInput.addEventListener('change', updateSummary);
         checkoutInput.addEventListener('change', updateSummary);
         updateSummary();
+
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(msg => {
+            setTimeout(() => {
+                msg.style.transition = "opacity 0.5s ease";
+                msg.style.opacity = "0";
+                setTimeout(() => msg.remove(), 500);
+            }, 3000);
+        });
     </script>
 
 </body>
