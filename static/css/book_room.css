@@ -5,10 +5,76 @@
 }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #e9ecef;
-    color: #2d3748;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+    color: #1e293b;
     padding: 0;
+    min-height: 100vh;
+}
+
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 220px;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    padding: 2rem 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #2563eb;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar nav a {
+    padding: 0.8rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    display: block;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+    background: #e0f2fe;
+    color: #2563eb;
+}
+
+.sidebar nav a.logout {
+    margin-top: auto;
+    color: #dc2626;
+}
+
+.sidebar nav a.logout:hover {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.booking-main {
+    flex: 1;
+    margin-left: 220px;
+    width: calc(100% - 220px);
+    padding: 30px 20px 40px;
     min-height: 100vh;
 }
 
@@ -20,38 +86,10 @@ body {
     background: white;
     padding: 15px 30px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    display: flex;
-    align-items: center;
+    border-radius: 12px;
+    margin-bottom: 20px;
     gap: 20px;
 }
-
-.flash-container {
-        position: fixed;
-        top: 80px; /* adjust this to sit below navbar if needed */
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 2000; /* make sure it sits above other elements */
-    }
-
-    .flash-message {
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        opacity: 1;
-    }
-
-    .flash-message.success {
-        background-color: #16a34a;
-    }
-
-    .flash-message.danger {
-        background-color: #dc2626;
-    }
 
 .back {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
@@ -80,7 +118,8 @@ body {
 
 .container {
     max-width: 1100px;
-    margin: 30px auto;
+    margin: 0 auto;
+    margin-top: 10px;
     padding: 0 20px;
     display: grid;
     grid-template-columns: 400px 1fr;
@@ -259,14 +298,51 @@ select:focus {
 }
 
 .unavailable-list {
-    border: 1px dashed #cbd5e1;
+    list-style: none;
+    border: 1px solid #e2e8f0;
     background: #f8fafc;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 12px;
+    border-radius: 10px;
     font-size: 13px;
     color: #475569;
     line-height: 1.4;
-    min-height: 42px;
+    min-height: 48px;
+    display: grid;
+    gap: 10px;
+}
+
+.unavailable-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    position: relative;
+}
+
+.unavailable-list li::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+    flex-shrink: 0;
+}
+
+.unavailable-list li.empty-state {
+    justify-content: center;
+    color: #16a34a;
+    border-style: dashed;
+    background: #f0fdf4;
+}
+
+.unavailable-list li.empty-state::before {
+    background: #16a34a;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
 }
 
 .date-warning {
@@ -302,6 +378,26 @@ select:focus {
 }
 
 @media (max-width: 1024px) {
+    .booking-main {
+        margin-left: 0;
+        padding-top: 20px;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
     .container {
         grid-template-columns: 1fr;
         gap: 20px;

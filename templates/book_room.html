@@ -5,180 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Room {{ room.room_number }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/book_room.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}">
 </head>
 <body>
-    <div class="top-bar">
-        <h1>Room Booking</h1>
-        <a href="{{ url_for('user_dashboard') }}" class="back">Select Room</a>
-    </div>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>User Dashboard</h2>
+            <nav>
+                <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('my_bookings') }}">My Bookings</a>
+                <a href="{{ url_for('user_profile') }}">Profile</a>
+                <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+            </nav>
+        </aside>
 
-    <div class="flash-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="flash-message {{ category }}">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
+        <div class="booking-main">
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
 
-    <div class="container">
-        <!-- Left Side: Room Preview -->
-        <div class="room-card">
-            {% if room.image_path %}
-            <img src="{{ url_for('static', filename='uploads/rooms/' ~ room.image_path) }}" alt="Room" class="room-image">
-            {% else %}
-            <img src="https://via.placeholder.com/400x250/6366f1/ffffff?text=Room+{{ room.room_number }}" alt="Room" class="room-image">
-            {% endif %}
+            <div class="top-bar">
+                <h1>Room Booking</h1>
+                <a href="{{ url_for('user_dashboard') }}" class="back">Go Back</a>
+            </div>
 
-            <div class="room-info">
-                <h2>Room {{ room.room_number }}</h2>
-                <p class="room-type"><b>{{ room.room_type_name }}</b> - {{ room.description }}</p>
+            <div class="container">
+                <!-- Left Side: Room Preview -->
+                <div class="room-card">
+                    {% if room.image_path %}
+                    <img src="{{ url_for('static', filename='uploads/rooms/' ~ room.image_path) }}" alt="Room" class="room-image">
+                    {% else %}
+                    <img src="https://via.placeholder.com/400x250/6366f1/ffffff?text=Room+{{ room.room_number }}" alt="Room" class="room-image">
+                    {% endif %}
 
-                <div class="price-tag">
-                    <div class="price">Rs {{ "%.2f"|format(room.price_per_night|default(120)) }}</div>
-                    <div class="per-night">per night</div>
+                    <div class="room-info">
+                        <h2>Room {{ room.room_number }}</h2>
+                        <p class="room-type"><b>{{ room.room_type_name }}</b> - {{ room.description }}</p>
+
+                        <div class="price-tag">
+                            <div class="price">Rs {{ "%.2f"|format(room.price_per_night|default(120)) }}</div>
+                            <div class="per-night">per night</div>
+                        </div>
+
+                        <!-- Summary UI removed per request -->
+                    </div>
                 </div>
 
-                <div class="summary-card">
-                    <h3>Booking Summary</h3>
-                    <div class="summary-row">
-                        <span>Check-in:</span>
-                        <strong id="display_checkin">—</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Check-out:</span>
-                        <strong id="display_checkout">—</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Total Nights:</span>
-                        <strong id="total_nights">0</strong>
-                    </div>
-                    <div class="summary-row total-row">
-                        <span>Total Amount:</span>
-                        <strong>Rs <span id="total_cost">0.00</span></strong>
-                    </div>
+                <!-- Right Side: Booking Form -->
+                <div class="form-card">
+                    <form id="bookingForm">
+                        <!-- Date Selection -->
+                        <div class="section">
+                            <h2>Select Dates</h2>
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Check-in Date *</label>
+                                    <input type="date" id="checkin" required>
+                                    <div class="note" id="checkin-note"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Check-out Date *</label>
+                                    <input type="date" id="checkout" required>
+                                    <div class="note" id="checkout-note"></div>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Unavailable Dates</label>
+                                    <ul id="unavailable-list" class="unavailable-list">
+                                        {% if unavailable_ranges and unavailable_ranges|length > 0 %}
+                                            {% for r in unavailable_ranges %}
+                                                <li>{{ r.start[:10] }} to {{ r.end[:10] }}</li>
+                                            {% endfor %}
+                                        {% else %}
+                                            <li class="empty-state">No unavailable dates.</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden calculation fields -->
+                        <input type="hidden" id="weekend_nights" value="0">
+                        <input type="hidden" id="week_nights" value="0">
+                        <input type="hidden" id="lead_time" value="0">
+                        <input type="hidden" id="arrival_year">
+                        <input type="hidden" id="arrival_month">
+                        <input type="hidden" id="arrival_date">
+                        <input type="hidden" id="total_nights" value="0">
+                        <input type="hidden" id="total_cost" value="0.00">
+
+                        <!-- Guest Details -->
+                        <div class="section">
+                            <h2>Guest Information</h2>
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Number of Adults *</label>
+                                    <input type="number" id="no_of_adults" min="1" max="6" value="2" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Number of Children</label>
+                                    <input type="number" id="no_of_children" min="0" max="4" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preferences -->
+                        <div class="section">
+                            <h2>Preferences</h2>
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Meal Plan *</label>
+                                    <select id="meal_plan_id" required>
+                                        {% for m in meal_plans %}
+                                        <option value="{{ m.meal_plan_id }}">{{ m.meal_plan_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Market Segment *</label>
+                                    <select id="market_segment_id" required>
+                                        {% for s in segments %}
+                                        <!-- carry the human-readable name for client logic; backend still validates -->
+                                        <option value="{{ s.market_segment_id }}" data-segment-name="{{ s.segment_name }}">{{ s.segment_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Special Requests</label>
+                                    <input type="number" id="no_of_special_requests" min="0" max="5" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Car Parking</label>
+                                    <select id="required_car_parking_space">
+                                        <option value="0">Not Required</option>
+                                        <option value="1">Required</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Payment/Booking Section -->
+                        <div class="payment-section">
+                            <div class="total-preview">
+                                <strong>Total: Rs <span id="display_total">0.00</span></strong>
+                            </div>
+                            <button type="button" class="btn-submit" id="bookButton" disabled>
+                                <span id="button-text">Fill all fields</span>
+                            </button>
+                            <div class="payment-note" id="payment-note">
+                                Select dates and preferences to continue.
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields for ML model / booking -->
+                        <input type="hidden" id="repeated_guest" value="{{ repeated_guest }}">
+                        <input type="hidden" id="no_of_previous_cancellations" value="{{ previous_cancellations }}">
+                        <input type="hidden" id="no_of_previous_bookings_not_canceled" value="{{ previous_successful }}">
+                        <input type="hidden" id="avg_price_per_room" value="{{ room.price_per_night|default(120) }}">
+                        <input type="hidden" id="room_id" value="{{ room.room_id }}">
+                        <input type="hidden" id="room_number" value="{{ room.room_number }}">
+                    </form>
                 </div>
             </div>
         </div>
-
-        <!-- Right Side: Booking Form -->
-        <div class="form-card">
-            <form id="bookingForm">
-                <!-- Date Selection -->
-                <div class="section">
-                    <h2>Select Dates</h2>
-                    <div class="grid">
-                        <div class="form-group">
-                            <label>Check-in Date *</label>
-                            <input type="date" id="checkin" required>
-                            <div class="note" id="checkin-note"></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Check-out Date *</label>
-                            <input type="date" id="checkout" required>
-                            <div class="note" id="checkout-note"></div>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Unavailable Dates</label>
-                            <div id="unavailable-list" class="unavailable-list">
-                                {% if unavailable_ranges and unavailable_ranges|length > 0 %}
-                                    {% for r in unavailable_ranges %}
-                                        <div>
-                                            {{ r.start[:10] }} → {{ r.end[:10] }}
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div>Loading...</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hidden calculation fields -->
-                <input type="hidden" id="weekend_nights" value="0">
-                <input type="hidden" id="week_nights" value="0">
-                <input type="hidden" id="lead_time" value="0">
-                <input type="hidden" id="arrival_year">
-                <input type="hidden" id="arrival_month">
-                <input type="hidden" id="arrival_date">
-
-                <!-- Guest Details -->
-                <div class="section">
-                    <h2>Guest Information</h2>
-                    <div class="grid">
-                        <div class="form-group">
-                            <label>Number of Adults *</label>
-                            <input type="number" id="no_of_adults" min="1" max="6" value="2" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Number of Children</label>
-                            <input type="number" id="no_of_children" min="0" max="4" value="0">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Preferences -->
-                <div class="section">
-                    <h2>Preferences</h2>
-                    <div class="grid">
-                        <div class="form-group">
-                            <label>Meal Plan *</label>
-                            <select id="meal_plan_id" required>
-                                {% for m in meal_plans %}
-                                <option value="{{ m.meal_plan_id }}">{{ m.meal_plan_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Market Segment *</label>
-                            <select id="market_segment_id" required>
-                                {% for s in segments %}
-                                <!-- carry the human-readable name for client logic; backend still validates -->
-                                <option value="{{ s.market_segment_id }}" data-segment-name="{{ s.segment_name }}">{{ s.segment_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Special Requests</label>
-                            <input type="number" id="no_of_special_requests" min="0" max="5" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Car Parking</label>
-                            <select id="required_car_parking_space">
-                                <option value="0">Not Required</option>
-                                <option value="1">Required</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dynamic Payment/Booking Section -->
-                <div class="payment-section">
-                    <div class="total-preview">
-                        <strong>Total: Rs <span id="display_total">0.00</span></strong>
-                    </div>
-                    <button type="button" class="btn-submit" id="bookButton" disabled>
-                        <span id="button-text">Fill all fields</span>
-                    </button>
-                    <div class="payment-note" id="payment-note">
-                        Select dates and preferences to continue.
-                    </div>
-                </div>
-
-                <!-- Hidden fields for ML model / booking -->
-                <input type="hidden" id="repeated_guest" value="{{ repeated_guest }}">
-                <input type="hidden" id="no_of_previous_cancellations" value="{{ previous_cancellations }}">
-                <input type="hidden" id="no_of_previous_bookings_not_canceled" value="{{ previous_successful }}">
-                <input type="hidden" id="avg_price_per_room" value="{{ room.price_per_night|default(120) }}">
-                <input type="hidden" id="room_id" value="{{ room.room_id }}">
-                <input type="hidden" id="room_number" value="{{ room.room_number }}">
-            </form>
-        </div>
     </div>
 
-    <script id="unavailable-seed-data" type="application/json">{{ unavailable_ranges|tojson }}</script>
     <script>
         const checkinInput = document.getElementById('checkin');
         const checkoutInput = document.getElementById('checkout');
@@ -187,68 +183,6 @@
         const bookButton = document.getElementById('bookButton');
         const buttonText = document.getElementById('button-text');
         const paymentNote = document.getElementById('payment-note');
-        const unavailableSeed = JSON.parse(document.getElementById('unavailable-seed-data').textContent || '[]');
-        const dateWarning = document.createElement('div');
-        dateWarning.id = 'date-warning';
-        dateWarning.className = 'date-warning';
-        document.querySelector('.section .grid').appendChild(dateWarning);
-        const unavailableList = document.getElementById('unavailable-list');
-
-        // Unavailable ranges from server (start inclusive, end exclusive)
-        let unavailableRanges = [];
-
-        async function loadUnavailableRanges() {
-            // Seed from server-rendered data if present to avoid empty state
-            if (unavailableRanges.length === 0) {
-                unavailableRanges = (unavailableSeed || []).map(r => ({
-                    start: new Date(r.start),
-                    end: new Date(r.end)
-                }));
-            }
-            renderUnavailable();
-            try {
-                const roomId = document.getElementById('room_id').value;
-                const res = await fetch(`/api/rooms/${roomId}/unavailable`);
-                if (!res.ok) {
-                    if (!unavailableRanges.length) {
-                        unavailableList.textContent = "Unable to load unavailable dates.";
-                    }
-                    return;
-                }
-                const data = await res.json();
-                unavailableRanges = (data.ranges || []).map(r => ({
-                    start: new Date(r.start),
-                    end: new Date(r.end)
-                }));
-                renderUnavailable();
-            } catch (e) {
-                console.warn('Could not load unavailable ranges', e);
-                if (!unavailableRanges.length) {
-                    unavailableList.textContent = "Unavailable dates could not be loaded.";
-                }
-            }
-        }
-
-        function renderUnavailable() {
-            if (!unavailableList) return;
-            if (!unavailableRanges.length) {
-                unavailableList.textContent = "All dates are currently available.";
-                return;
-            }
-            unavailableList.innerHTML = "";
-            unavailableRanges
-                .sort((a, b) => a.start - b.start)
-                .forEach(r => {
-                    const item = document.createElement('div');
-                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                    item.textContent = `${r.start.toLocaleDateString(undefined, options)} → ${r.end.toLocaleDateString(undefined, options)}`;
-                    unavailableList.appendChild(item);
-                });
-        }
-
-        function overlapsUnavailable(checkin, checkout) {
-            return unavailableRanges.some(r => checkin < r.end && checkout > r.start);
-        }
 
         // Check if selected segment is Online (name comparison kept on a data attribute)
         function isOnlineSegment() {
@@ -296,24 +230,9 @@
             const leadTime = Math.max(0, Math.round((checkin - todayDate) / oneDay));
 
             const totalAmount = (nights * price).toFixed(2);
-
-            // Check availability against booked ranges
-            if (overlapsUnavailable(checkin, checkout)) {
-                dateWarning.textContent = "Selected dates overlap with an existing booking for this room.";
-                dateWarning.style.display = "block";
-                resetButton();
-                return;
-            } else {
-                dateWarning.textContent = "";
-                dateWarning.style.display = "none";
-            }
-
-            // Update UI displays
-            document.getElementById('display_checkin').textContent = checkin.toLocaleDateString('en-IN');
-            document.getElementById('display_checkout').textContent = checkout.toLocaleDateString('en-IN');
-            document.getElementById('total_nights').textContent = nights;
-            document.getElementById('total_cost').textContent = totalAmount;
             document.getElementById('display_total').textContent = totalAmount;
+            document.getElementById('total_cost').value = totalAmount;
+            document.getElementById('total_nights').value = nights;
 
             // Update hidden fields
             document.getElementById('weekend_nights').value = weekendCount;
@@ -337,8 +256,8 @@
                     paymentNote.textContent = "Secure payment via Khalti. Booking will be confirmed after successful payment.";
                 } else {
                     // Offline: Instant booking
-                    buttonText.textContent = `Book Now (Offline) - Rs ${totalAmount}`;
-                    paymentNote.innerHTML = "✅ Instant booking confirmation<br><small>Payment at hotel reception</small>";
+                    buttonText.textContent = `Book Room - Rs ${totalAmount}`;
+                    paymentNote.textContent = "Payment will be handled at the hotel reception.";
                 }
             } else {
                 resetButton();
@@ -365,7 +284,7 @@
                 arrival_year: parseInt(document.getElementById('arrival_year').value),
                 arrival_month: parseInt(document.getElementById('arrival_month').value),
                 arrival_date: parseInt(document.getElementById('arrival_date').value),
-                total_nights: parseInt(document.getElementById('total_nights').textContent),
+                total_nights: parseInt(document.getElementById('total_nights').value),
                 total_guests: parseInt(document.getElementById('no_of_adults').value) + parseInt(document.getElementById('no_of_children').value || 0),
                 no_of_special_requests: parseInt(document.getElementById('no_of_special_requests').value || 0),
                 required_car_parking_space: parseInt(document.getElementById('required_car_parking_space').value || 0),
@@ -395,7 +314,13 @@
         bookButton.addEventListener('click', async (e) => {
             e.preventDefault();
 
-            const totalAmount = parseFloat(document.getElementById('total_cost').textContent);
+            // If somehow still disabled, surface a clear hint
+            if (bookButton.disabled) {
+                showMessage("Please choose valid dates, meal plan, and market segment first.", "danger");
+                return;
+            }
+
+            const totalAmount = parseFloat(document.getElementById('total_cost').value);
             const bookingData = getBookingData();
 
             if (isOnlineSegment()) {
@@ -414,7 +339,12 @@
                         })
                     });
 
-                    const result = await response.json();
+                    let result = {};
+                    try {
+                        result = await response.json();
+                    } catch (parseErr) {
+                        console.error("Failed to parse payment response", parseErr);
+                    }
 
                     if (response.ok && result.success && result.payment_url) {
                         window.location.href = result.payment_url;
@@ -471,7 +401,7 @@
             }, 3000);
         });
 
-        loadUnavailableRanges().then(updateSummary);
+        updateSummary();
     </script>
 </body>
 </html>

@@ -33,46 +33,6 @@ body {
     color: #2563eb;
 }
 
-.flash-container {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 2000;
-}
-
-.flash-message {
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 14px;
-    color: white;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    opacity: 1;
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.flash-message.success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.flash-message.danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-}
-
 .sidebar nav {
     display: flex;
     flex-direction: column;

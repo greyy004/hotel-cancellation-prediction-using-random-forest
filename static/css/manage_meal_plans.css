@@ -40,34 +40,6 @@ body {
     gap: 0.5rem;
 }
 
-.flash-container {
-        position: fixed;
-        top: 80px; /* adjust this to sit below navbar if needed */
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 2000; /* make sure it sits above other elements */
-    }
-
-    .flash-message {
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        opacity: 1;
-    }
-
-    .flash-message.success {
-        background-color: #16a34a;
-    }
-
-    .flash-message.danger {
-        background-color: #dc2626;
-    }
-
 .sidebar nav a {
     padding: 0.8rem 1rem;
     color: #374151;

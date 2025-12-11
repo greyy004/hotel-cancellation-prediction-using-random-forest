@@ -1,0 +1,56 @@
+/* Shared flash message styles used across all pages */
+.flash-container {
+    position: fixed;
+    top: 84px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(420px, calc(100% - 40px));
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.flash-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0.95rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    opacity: 0.98;
+    pointer-events: auto;
+    animation: flash-slide-in 0.32s ease, flash-fade-out 0.45s ease 3s forwards;
+}
+
+.flash-message.success {
+    background: linear-gradient(135deg, #16a34a 0%, #0e9f6e 100%);
+}
+
+.flash-message.danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+@keyframes flash-slide-in {
+    from {
+        transform: translateX(140px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 0.98;
+    }
+}
+
+@keyframes flash-fade-out {
+    to {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+}
+

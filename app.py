@@ -150,8 +150,10 @@ def get_db_connection():
 
 def compute_total_nights_from_row(row):
     """Compute total nights from a DB row, falling back to component nights."""
-    if row["total_nights"] is not None:
-        return row["total_nights"]
+    total_nights = row["total_nights"]
+    # Treat zero/negative as missing to avoid hiding booked ranges
+    if total_nights is not None and total_nights > 0:
+        return total_nights
     return (row["no_of_weekend_nights"] or 0) + (row["no_of_week_nights"] or 0)
 
 def booking_window_from_payload(data):
