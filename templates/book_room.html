@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Room {{ room.room_number }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/book_room.css') }}">
 </head>
-
 <body>
-
     <div class="top-bar">
         <h1>Room Booking</h1>
         <a href="{{ url_for('user_dashboard') }}" class="back">Select Room</a>
     </div>
+
     <div class="flash-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -23,15 +21,14 @@
         {% endif %}
         {% endwith %}
     </div>
+
     <div class="container">
         <!-- Left Side: Room Preview -->
         <div class="room-card">
             {% if room.image_path %}
-            <img src="{{ url_for('static', filename='uploads/rooms/' ~ room.image_path) }}" alt="Room"
-                class="room-image">
+            <img src="{{ url_for('static', filename='uploads/rooms/' ~ room.image_path) }}" alt="Room" class="room-image">
             {% else %}
-            <img src="https://via.placeholder.com/400x250/6366f1/ffffff?text=Room+{{ room.room_number }}" alt="Room"
-                class="room-image">
+            <img src="https://via.placeholder.com/400x250/6366f1/ffffff?text=Room+{{ room.room_number }}" alt="Room" class="room-image">
             {% endif %}
 
             <div class="room-info">
@@ -67,8 +64,7 @@
 
         <!-- Right Side: Booking Form -->
         <div class="form-card">
-            <form method="POST" action="{{ url_for('book_room', room_id=room.room_id) }}" id="bookingForm">
-
+            <form id="bookingForm">
                 <!-- Date Selection -->
                 <div class="section">
                     <h2>Select Dates</h2>
@@ -83,17 +79,30 @@
                             <input type="date" id="checkout" required>
                             <div class="note" id="checkout-note"></div>
                         </div>
+                        <div class="form-group full-width">
+                            <label>Unavailable Dates</label>
+                            <div id="unavailable-list" class="unavailable-list">
+                                {% if unavailable_ranges and unavailable_ranges|length > 0 %}
+                                    {% for r in unavailable_ranges %}
+                                        <div>
+                                            {{ r.start[:10] }} → {{ r.end[:10] }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div>Loading...</div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Hidden fields -->
-                <input type="hidden" name="no_of_weekend_nights" id="weekend_nights" value="0">
-                <input type="hidden" name="no_of_week_nights" id="week_nights" value="0">
-                <input type="hidden" name="lead_time" id="lead_time" value="0">
-                <input type="hidden" name="arrival_year" id="arrival_year">
-                <input type="hidden" name="arrival_month" id="arrival_month">
-                <input type="hidden" name="arrival_date" id="arrival_date">
-                <input type="hidden" name="avg_price_per_room" value="{{ room.price_per_night|default(120) }}">
+                <!-- Hidden calculation fields -->
+                <input type="hidden" id="weekend_nights" value="0">
+                <input type="hidden" id="week_nights" value="0">
+                <input type="hidden" id="lead_time" value="0">
+                <input type="hidden" id="arrival_year">
+                <input type="hidden" id="arrival_month">
+                <input type="hidden" id="arrival_date">
 
                 <!-- Guest Details -->
                 <div class="section">
@@ -101,11 +110,11 @@
                     <div class="grid">
                         <div class="form-group">
                             <label>Number of Adults *</label>
-                            <input type="number" name="no_of_adults" min="1" max="6" value="2" required>
+                            <input type="number" id="no_of_adults" min="1" max="6" value="2" required>
                         </div>
                         <div class="form-group">
                             <label>Number of Children</label>
-                            <input type="number" name="no_of_children" min="0" max="4" value="0">
+                            <input type="number" id="no_of_children" min="0" max="4" value="0">
                         </div>
                     </div>
                 </div>
@@ -116,7 +125,7 @@
                     <div class="grid">
                         <div class="form-group">
                             <label>Meal Plan *</label>
-                            <select name="meal_plan_id" required>
+                            <select id="meal_plan_id" required>
                                 {% for m in meal_plans %}
                                 <option value="{{ m.meal_plan_id }}">{{ m.meal_plan_name }}</option>
                                 {% endfor %}
@@ -124,19 +133,20 @@
                         </div>
                         <div class="form-group">
                             <label>Market Segment *</label>
-                            <select name="market_segment_id" required>
+                            <select id="market_segment_id" required>
                                 {% for s in segments %}
-                                <option value="{{ s.market_segment_id }}">{{ s.segment_name }}</option>
+                                <!-- carry the human-readable name for client logic; backend still validates -->
+                                <option value="{{ s.market_segment_id }}" data-segment-name="{{ s.segment_name }}">{{ s.segment_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Special Requests</label>
-                            <input type="number" name="no_of_special_requests" min="0" max="5" value="0">
+                            <input type="number" id="no_of_special_requests" min="0" max="5" value="0">
                         </div>
                         <div class="form-group">
                             <label>Car Parking</label>
-                            <select name="required_car_parking_space">
+                            <select id="required_car_parking_space">
                                 <option value="0">Not Required</option>
                                 <option value="1">Required</option>
                             </select>
@@ -144,20 +154,109 @@
                     </div>
                 </div>
 
-                <!-- Hidden ML fields -->
-                <input type="hidden" name="repeated_guest" value="0">
-                <input type="hidden" name="no_of_previous_cancellations" value="">
-                <input type="hidden" name="no_of_previous_bookings_not_canceled" value="">
+                <!-- Dynamic Payment/Booking Section -->
+                <div class="payment-section">
+                    <div class="total-preview">
+                        <strong>Total: Rs <span id="display_total">0.00</span></strong>
+                    </div>
+                    <button type="button" class="btn-submit" id="bookButton" disabled>
+                        <span id="button-text">Fill all fields</span>
+                    </button>
+                    <div class="payment-note" id="payment-note">
+                        Select dates and preferences to continue.
+                    </div>
+                </div>
 
-                <button type="submit" class="btn-submit">Confirm Booking</button>
+                <!-- Hidden fields for ML model / booking -->
+                <input type="hidden" id="repeated_guest" value="{{ repeated_guest }}">
+                <input type="hidden" id="no_of_previous_cancellations" value="{{ previous_cancellations }}">
+                <input type="hidden" id="no_of_previous_bookings_not_canceled" value="{{ previous_successful }}">
+                <input type="hidden" id="avg_price_per_room" value="{{ room.price_per_night|default(120) }}">
+                <input type="hidden" id="room_id" value="{{ room.room_id }}">
+                <input type="hidden" id="room_number" value="{{ room.room_number }}">
             </form>
         </div>
     </div>
 
+    <script id="unavailable-seed-data" type="application/json">{{ unavailable_ranges|tojson }}</script>
     <script>
         const checkinInput = document.getElementById('checkin');
         const checkoutInput = document.getElementById('checkout');
+        const marketSegmentSelect = document.getElementById('market_segment_id');
+        const mealPlanSelect = document.getElementById('meal_plan_id');
+        const bookButton = document.getElementById('bookButton');
+        const buttonText = document.getElementById('button-text');
+        const paymentNote = document.getElementById('payment-note');
+        const unavailableSeed = JSON.parse(document.getElementById('unavailable-seed-data').textContent || '[]');
+        const dateWarning = document.createElement('div');
+        dateWarning.id = 'date-warning';
+        dateWarning.className = 'date-warning';
+        document.querySelector('.section .grid').appendChild(dateWarning);
+        const unavailableList = document.getElementById('unavailable-list');
 
+        // Unavailable ranges from server (start inclusive, end exclusive)
+        let unavailableRanges = [];
+
+        async function loadUnavailableRanges() {
+            // Seed from server-rendered data if present to avoid empty state
+            if (unavailableRanges.length === 0) {
+                unavailableRanges = (unavailableSeed || []).map(r => ({
+                    start: new Date(r.start),
+                    end: new Date(r.end)
+                }));
+            }
+            renderUnavailable();
+            try {
+                const roomId = document.getElementById('room_id').value;
+                const res = await fetch(`/api/rooms/${roomId}/unavailable`);
+                if (!res.ok) {
+                    if (!unavailableRanges.length) {
+                        unavailableList.textContent = "Unable to load unavailable dates.";
+                    }
+                    return;
+                }
+                const data = await res.json();
+                unavailableRanges = (data.ranges || []).map(r => ({
+                    start: new Date(r.start),
+                    end: new Date(r.end)
+                }));
+                renderUnavailable();
+            } catch (e) {
+                console.warn('Could not load unavailable ranges', e);
+                if (!unavailableRanges.length) {
+                    unavailableList.textContent = "Unavailable dates could not be loaded.";
+                }
+            }
+        }
+
+        function renderUnavailable() {
+            if (!unavailableList) return;
+            if (!unavailableRanges.length) {
+                unavailableList.textContent = "All dates are currently available.";
+                return;
+            }
+            unavailableList.innerHTML = "";
+            unavailableRanges
+                .sort((a, b) => a.start - b.start)
+                .forEach(r => {
+                    const item = document.createElement('div');
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    item.textContent = `${r.start.toLocaleDateString(undefined, options)} → ${r.end.toLocaleDateString(undefined, options)}`;
+                    unavailableList.appendChild(item);
+                });
+        }
+
+        function overlapsUnavailable(checkin, checkout) {
+            return unavailableRanges.some(r => checkin < r.end && checkout > r.start);
+        }
+
+        // Check if selected segment is Online (name comparison kept on a data attribute)
+        function isOnlineSegment() {
+            const opt = marketSegmentSelect.options[marketSegmentSelect.selectedIndex];
+            return opt && opt.dataset.segmentName === 'Online';
+        }
+
+        // Date restrictions
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
         checkinInput.min = todayStr;
@@ -166,18 +265,16 @@
         function updateSummary() {
             const checkin = checkinInput.value ? new Date(checkinInput.value) : null;
             const checkout = checkoutInput.value ? new Date(checkoutInput.value) : null;
-            const price = "{{ room.price_per_night }}";
+            const price = parseFloat(document.getElementById('avg_price_per_room').value);
 
             if (!checkin || !checkout) {
-                document.getElementById('display_checkin').textContent = '—';
-                document.getElementById('display_checkout').textContent = '—';
-                document.getElementById('total_nights').textContent = '0';
-                document.getElementById('total_cost').textContent = '0.00';
+                resetButton();
                 return;
             }
 
             if (checkout <= checkin) {
                 document.getElementById('checkout-note').textContent = 'Check-out must be after check-in';
+                resetButton();
                 return;
             } else {
                 document.getElementById('checkout-note').textContent = '';
@@ -195,36 +292,186 @@
             const weeknights = nights - weekendCount;
 
             const todayDate = new Date();
-            todayDate.setHours(0, 0, 0, 0, 0);
+            todayDate.setHours(0, 0, 0, 0);
             const leadTime = Math.max(0, Math.round((checkin - todayDate) / oneDay));
 
+            const totalAmount = (nights * price).toFixed(2);
+
+            // Check availability against booked ranges
+            if (overlapsUnavailable(checkin, checkout)) {
+                dateWarning.textContent = "Selected dates overlap with an existing booking for this room.";
+                dateWarning.style.display = "block";
+                resetButton();
+                return;
+            } else {
+                dateWarning.textContent = "";
+                dateWarning.style.display = "none";
+            }
+
+            // Update UI displays
             document.getElementById('display_checkin').textContent = checkin.toLocaleDateString('en-IN');
             document.getElementById('display_checkout').textContent = checkout.toLocaleDateString('en-IN');
             document.getElementById('total_nights').textContent = nights;
-            document.getElementById('total_cost').textContent = (nights * price).toFixed(2);
+            document.getElementById('total_cost').textContent = totalAmount;
+            document.getElementById('display_total').textContent = totalAmount;
 
+            // Update hidden fields
             document.getElementById('weekend_nights').value = weekendCount;
             document.getElementById('week_nights').value = weeknights;
             document.getElementById('lead_time').value = leadTime;
             document.getElementById('arrival_year').value = checkin.getFullYear();
             document.getElementById('arrival_month').value = checkin.getMonth() + 1;
             document.getElementById('arrival_date').value = checkin.getDate();
+
+            // Update booking button
+            updateBookButton(totalAmount, nights);
         }
 
+        function updateBookButton(totalAmount, nights) {
+            if (nights > 0 && mealPlanSelect.value && marketSegmentSelect.value) {
+                bookButton.disabled = false;
+
+                if (isOnlineSegment()) {
+                    // Online: initiate payment on backend and redirect to Khalti
+                    buttonText.textContent = `Pay Rs ${totalAmount} with Khalti`;
+                    paymentNote.textContent = "Secure payment via Khalti. Booking will be confirmed after successful payment.";
+                } else {
+                    // Offline: Instant booking
+                    buttonText.textContent = `Book Now (Offline) - Rs ${totalAmount}`;
+                    paymentNote.innerHTML = "✅ Instant booking confirmation<br><small>Payment at hotel reception</small>";
+                }
+            } else {
+                resetButton();
+            }
+        }
+
+        function resetButton() {
+            bookButton.disabled = true;
+            buttonText.textContent = "Fill all required fields";
+            paymentNote.textContent = "Select dates, meal plan, and market segment to continue.";
+        }
+
+        // Get complete booking data
+        function getBookingData() {
+            return {
+                room_id: parseInt(document.getElementById('room_id').value),
+                room_number: document.getElementById('room_number').value,
+                avg_price_per_room: parseFloat(document.getElementById('avg_price_per_room').value),
+                no_of_adults: parseInt(document.getElementById('no_of_adults').value),
+                no_of_children: parseInt(document.getElementById('no_of_children').value || 0),
+                no_of_weekend_nights: parseInt(document.getElementById('weekend_nights').value),
+                no_of_week_nights: parseInt(document.getElementById('week_nights').value),
+                lead_time: parseInt(document.getElementById('lead_time').value),
+                arrival_year: parseInt(document.getElementById('arrival_year').value),
+                arrival_month: parseInt(document.getElementById('arrival_month').value),
+                arrival_date: parseInt(document.getElementById('arrival_date').value),
+                total_nights: parseInt(document.getElementById('total_nights').textContent),
+                total_guests: parseInt(document.getElementById('no_of_adults').value) + parseInt(document.getElementById('no_of_children').value || 0),
+                no_of_special_requests: parseInt(document.getElementById('no_of_special_requests').value || 0),
+                required_car_parking_space: parseInt(document.getElementById('required_car_parking_space').value || 0),
+                meal_plan_id: parseInt(document.getElementById('meal_plan_id').value),
+                market_segment_id: parseInt(document.getElementById('market_segment_id').value),
+                repeated_guest: parseInt(document.getElementById('repeated_guest').value),
+                no_of_previous_cancellations: parseInt(document.getElementById('no_of_previous_cancellations').value),
+                no_of_previous_bookings_not_canceled: parseInt(document.getElementById('no_of_previous_bookings_not_canceled').value)
+            };
+        }
+
+        // Show flash messages (client-side)
+        function showMessage(message, category) {
+            const flashDiv = document.createElement('div');
+            flashDiv.className = `flash-message ${category}`;
+            flashDiv.textContent = message;
+            document.querySelector('.flash-container').appendChild(flashDiv);
+
+            setTimeout(() => {
+                flashDiv.style.transition = "opacity 0.5s ease";
+                flashDiv.style.opacity = "0";
+                setTimeout(() => flashDiv.remove(), 500);
+            }, 4000);
+        }
+
+        // Book button handler
+        bookButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const totalAmount = parseFloat(document.getElementById('total_cost').textContent);
+            const bookingData = getBookingData();
+
+            if (isOnlineSegment()) {
+                // ONLINE: create payment on backend and redirect to Khalti
+                try {
+                    bookButton.disabled = true;
+                    buttonText.textContent = "Redirecting to Khalti...";
+                    showMessage("Redirecting to payment gateway...", "info");
+
+                    const response = await fetch('/api/khalti/create-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            amount: totalAmount,
+                            booking_data: bookingData
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success && result.payment_url) {
+                        window.location.href = result.payment_url;
+                    } else {
+                        showMessage(result.error || "Payment initiation failed.", "danger");
+                        resetButton();
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showMessage("Error initiating payment. Please try again.", "danger");
+                    resetButton();
+                }
+            } else {
+                // OFFLINE: Direct booking
+                try {
+                    bookButton.disabled = true;
+                    buttonText.textContent = "Booking...";
+                    showMessage("Creating booking...", "info");
+
+                    const response = await fetch(`/book_room/{{ room.room_id }}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bookingData)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage("Booking confirmed successfully!", "success");
+                        setTimeout(() => window.location.href = '/user_dashboard', 1500);
+                    } else {
+                        showMessage(result.message || "Booking failed", "danger");
+                        resetButton();
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showMessage("Booking error. Please try again.", "danger");
+                    resetButton();
+                }
+            }
+        });
+
+        // Event listeners
         checkinInput.addEventListener('change', updateSummary);
         checkoutInput.addEventListener('change', updateSummary);
-        updateSummary();
+        marketSegmentSelect.addEventListener('change', updateSummary);
+        mealPlanSelect.addEventListener('change', updateSummary);
 
-        const flashMessages = document.querySelectorAll('.flash-message');
-        flashMessages.forEach(msg => {
+        // Auto-dismiss existing flashes
+        document.querySelectorAll('.flash-message').forEach(msg => {
             setTimeout(() => {
                 msg.style.transition = "opacity 0.5s ease";
                 msg.style.opacity = "0";
                 setTimeout(() => msg.remove(), 500);
             }, 3000);
         });
+
+        loadUnavailableRanges().then(updateSummary);
     </script>
-
 </body>
-
 </html>

@@ -5,8 +5,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #f1f5f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
     color: #1e293b;
 }
 
@@ -34,32 +34,44 @@ body {
 }
 
 .flash-container {
-        position: fixed;
-        top: 80px; /* adjust this to sit below navbar if needed */
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 2000; /* make sure it sits above other elements */
-    }
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+}
 
-    .flash-message {
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.flash-message {
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    opacity: 1;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
         opacity: 1;
     }
+}
 
-    .flash-message.success {
-        background-color: #16a34a;
-    }
+.flash-message.success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
 
-    .flash-message.danger {
-        background-color: #dc2626;
-    }
+.flash-message.danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
 
 .sidebar nav {
     display: flex;
@@ -93,10 +105,10 @@ body {
 }
 
 .container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 0 20px;
-    margin-left: 240px;
+    flex: 1;
+    margin-left: 220px;
+    padding: 40px 20px;
+    width: calc(100% - 220px);
 }
 
 .page-header {
@@ -118,30 +130,39 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 25px;
+    width: 100%;
 }
 
 .booking-card {
+    width: 100%;
     background: white;
-    border-radius: 12px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f1f5f9;
 }
 
 .booking-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+    border-color: #e0e7ff;
 }
 
 .booking-image {
     width: 100%;
-    height: 200px;
+    height: 240px;
     object-fit: cover;
-    background: linear-gradient(135deg, #667eea 0%, #39388b 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: transform 0.4s ease;
+}
+
+.booking-card:hover .booking-image {
+    transform: scale(1.05);
 }
 
 .booking-content {
-    padding: 25px;
+    padding: 32px;
 }
 
 .booking-header {
@@ -153,7 +174,7 @@ body {
 
 .booking-title {
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 800;
     color: #1e293b;
 }
 
@@ -161,9 +182,9 @@ body {
     font-size: 12px;
     color: #64748b;
     background: #f1f5f9;
-    padding: 4px 10px;
-    border-radius: 20px;
-    margin-top: 5px;
+    padding: 6px 12px;
+    border-radius: 14px;
+    margin-top: 6px;
     display: inline-block;
 }
 
@@ -309,10 +330,8 @@ body {
     .container {
         margin-left: 0;
         margin: 20px auto;
-    }
-
-    .bookings-grid {
-        grid-template-columns: 1fr;
+        width: 100%;
+        padding: 20px;
     }
 
     .page-header h2 {

@@ -254,6 +254,33 @@ select:focus {
     margin-top: 6px;
 }
 
+.full-width {
+    grid-column: 1 / -1;
+}
+
+.unavailable-list {
+    border: 1px dashed #cbd5e1;
+    background: #f8fafc;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.4;
+    min-height: 42px;
+}
+
+.date-warning {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 8px 10px;
+    border-radius: 6px;
+    display: none;
+}
+
 .btn-submit {
     width: 100%;
     background: #6366f1;
