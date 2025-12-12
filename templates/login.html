@@ -22,6 +22,9 @@
             {% endwith %}
         </div>
         <form method="post" id="loginForm" action="{{ url_for('login') }}">
+            {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
             <div>
                 <label for="name">Full Name</label>
                 <input id="name" name="name" type="text" required>

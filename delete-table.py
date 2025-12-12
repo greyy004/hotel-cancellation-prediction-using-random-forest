@@ -4,7 +4,7 @@ import sqlite3
 
 # Replace with your database file
 DB_FILE = "hotel_booking.db"
-TABLE_NAME = "customers"  # Replace with the table you want to delete
+TABLE_NAME = "meal_plans"  # Replace with the table you want to delete
 
 def delete_table(db_file, table_name):
     try:

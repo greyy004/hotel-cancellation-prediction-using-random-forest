@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ room.room_type_name }} - Room {{ room.room_number }} | HamroGhar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .view-room-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 2.5rem;
+        }
+
+        /* Main Content Layout - Two Columns */
+        .main-content-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content-layout {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+
+        .room-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .room-detail-header h1 {
+            font-size: 2.25rem;
+            margin: 0;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .back-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+
+        .back-link:hover {
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+
+        /* Room Overview Section */
+        .room-overview {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: linear-gradient(to bottom right, #ffffff, #f9fafb);
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            align-items: flex-start;
+        }
+
+        .room-image-container {
+            flex: 0 0 450px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transition: transform 0.3s;
+        }
+
+        .room-image-container:hover {
+            transform: scale(1.02);
+        }
+
+        .room-image-container img {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .room-basic-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-top: 0.5rem;
+        }
+
+        .room-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .room-type {
+            font-size: 1.125rem;
+            color: #2563eb;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .room-description {
+            font-size: 1rem;
+            color: #6b7280;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .price-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 160px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .price-label {
+            font-size: 0.75rem;
+            opacity: 0.95;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-amount {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .price-per-night {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        /* Details Section */
+        .room-details-section {
+            margin-bottom: 2rem;
+        }
+
+        .room-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            padding: 1.25rem;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #2563eb;
+            transition: all 0.2s;
+        }
+
+        .info-item:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .info-item strong {
+            display: block;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .info-item span {
+            color: #111827;
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .unavailable-dates-section {
+            padding: 1.5rem;
+            background: #fef2f2;
+            border-radius: 12px;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #ef4444;
+            margin-bottom: 1.5rem;
+        }
+
+        .unavailable-dates-section h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #991b1b;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .unavailable-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .unavailable-list li {
+            padding: 0.875rem 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            color: #7f1d1d;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border: 1px solid #fecaca;
+        }
+
+        .unavailable-list li.empty-state {
+            color: #7f1d1d;
+            font-style: normal;
+            background: #fee2e2;
+            border-color: #fecaca;
+        }
+
+        /* Left Sidebar - Meal Plans */
+        .meal-plans-sidebar {
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+            padding: 1.75rem;
+            background: linear-gradient(to bottom, #ffffff, #f0f9ff);
+            border-radius: 16px;
+            border: 1px solid #bfdbfe;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+        }
+
+        .meal-plans-sidebar h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin: 0 0 1.5rem 0;
+            text-align: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #bfdbfe;
+        }
+
+        .meal-plans-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+        }
+
+        .meal-plan-item {
+            background: white;
+            border-radius: 10px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+        }
+
+        .meal-plan-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: #2563eb;
+        }
+
+        .meal-plan-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .meal-plan-item .meal-plan-name {
+            padding: 0.75rem;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.875rem;
+            text-align: center;
+            background: white;
+        }
+
+        /* Right Column - Room Details */
+        .room-details-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .book-button-container {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .btn-book-large {
+            display: inline-block;
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-book-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+        .btn-book-large:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .view-room-container {
+                padding: 1.5rem 1rem;
+            }
+
+            .room-overview {
+                flex-direction: column;
+                padding: 1.5rem;
+            }
+
+            .room-image-container {
+                flex: 1;
+                width: 100%;
+            }
+
+            .room-image-container img {
+                height: 250px;
+            }
+
+            .price-section {
+                width: 100%;
+            }
+
+            .meal-plans-sidebar {
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">HamroGhar</div>
+        <div class="header-right">
+            <a href="{{ url_for('register') }}">Register</a>
+            <a href="{{ url_for('login') }}" class="btn btn-primary"
+                style="color: white; padding: 0.6rem 1.5rem; font-size: 0.95rem;">Login</a>
+        </div>
+    </header>
+
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="view-room-container">
+        <div class="room-detail-header">
+            <h1>Room Details</h1>
+            <a href="{{ url_for('landing') }}" class="back-link">
+                ← Back to Rooms
+            </a>
+        </div>
+
+        <!-- Main Content Layout - Two Columns -->
+        <div class="main-content-layout">
+            <!-- Left Sidebar - Meal Plans Template -->
+            {% if meal_plans and meal_plans|length > 0 %}
+            <div class="meal-plans-sidebar">
+                <h3>Available Meal Plans</h3>
+                <div class="meal-plans-list">
+                    {% for meal_plan in meal_plans %}
+                    {% if meal_plan.meal_plan_name != 'No Meal' %}
+                    <div class="meal-plan-item">
+                        {% if meal_plan.image_path %}
+                        <img src="{{ url_for('static', filename='uploads/menu_plans/' ~ meal_plan.image_path) }}" 
+                             alt="{{ meal_plan.meal_plan_name }}">
+                        {% else %}
+                        <img src="https://via.placeholder.com/300x150/e5e7eb/6b7280?text=Meal+Plan" 
+                             alt="Meal Plan">
+                        {% endif %}
+                        <div class="meal-plan-name">{{ meal_plan.meal_plan_name }}</div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Right Column - Room Details -->
+            <div class="room-details-column">
+                <!-- Room Overview Section - Horizontal Layout -->
+                <div class="room-overview">
+                    <div class="room-image-container">
+                        {% if room.image_path %}
+                        <img src="{{ url_for('static', filename='uploads/rooms/' ~ room.image_path) }}" alt="{{ room.room_type_name }}">
+                        {% else %}
+                        <img src="https://via.placeholder.com/300x200/6366f1/ffffff?text=Room+{{ room.room_number }}" alt="Room Image">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="room-basic-info">
+                        <h2 class="room-title">Room {{ room.room_number }}</h2>
+                        <p class="room-type">{{ room.room_type_name }}</p>
+                        {% if room.description %}
+                        <p class="room-description">{{ room.description }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="price-section">
+                        <div class="price-label">Starting from</div>
+                        <div class="price-amount">Rs {{ room.price_per_night|default(0) }}</div>
+                        <div class="price-per-night">per night</div>
+                    </div>
+                </div>
+
+                <!-- Room Details Section -->
+                <div class="room-details-section">
+                    <div class="room-info-grid">
+                        <div class="info-item">
+                            <strong>Room Number</strong>
+                            <span>{{ room.room_number }}</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Room Type</strong>
+                            <span>{{ room.room_type_name }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Unavailable Dates Section -->
+                    <div class="unavailable-dates-section">
+                        <h3>Unavailable Dates</h3>
+                        <ul class="unavailable-list">
+                            {% if unavailable_ranges and unavailable_ranges|length > 0 %}
+                                {% for r in unavailable_ranges %}
+                                    <li>{{ r.start[:10] }} to {{ r.end[:10] }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="empty-state">No unavailable dates. Room is available for booking!</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Book Button -->
+                <div class="book-button-container">
+                    <a href="{{ url_for('book_room', room_id=room.room_id) if session.get('user_id') else url_for('login', next=url_for('book_room', room_id=room.room_id)) }}" 
+                       class="btn-book-large">
+                        {% if session.get('user_id') %}
+                            Book Now
+                        {% else %}
+                            Login to Book
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(msg => {
+            setTimeout(() => {
+                msg.style.transition = "opacity 0.5s ease";
+                msg.style.opacity = "0";
+                setTimeout(() => msg.remove(), 500);
+            }, 3000);
+        });
+    </script>
+</body>
+
+</html>

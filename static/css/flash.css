@@ -1,56 +1,65 @@
-/* Shared flash message styles used across all pages */
+/* Flash Container (top right) */
 .flash-container {
     position: fixed;
     top: 84px;
     right: 20px;
+    width: min(320px, calc(100% - 40px));
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    width: min(420px, calc(100% - 40px));
+    gap: 8px;
     z-index: 2000;
     pointer-events: none;
 }
 
+/* Flash Message (Centered + Compact) */
 .flash-message {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 0.95rem 1.25rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 14px;
-    color: #fff;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    justify-content: center;   /* center horizontally */
+    align-items: center;        /* center vertically */
+    text-align: center;         /* center the text */
+
+    padding: 0.65rem 0.9rem;
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(6px);
-    opacity: 0.98;
+    border: 1px solid rgba(255, 255, 255, 0.10);
     pointer-events: auto;
-    animation: flash-slide-in 0.32s ease, flash-fade-out 0.45s ease 3s forwards;
+
+    opacity: 0;
+    animation: flash-slide-in 0.32s ease forwards,
+               flash-hide 0.45s ease forwards 3.1s;
 }
 
+/* Success */
 .flash-message.success {
-    background: linear-gradient(135deg, #16a34a 0%, #0e9f6e 100%);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
+/* Danger */
 .flash-message.danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+/* Slide-in */
 @keyframes flash-slide-in {
     from {
-        transform: translateX(140px);
+        transform: translateX(25px);
         opacity: 0;
     }
     to {
         transform: translateX(0);
-        opacity: 0.98;
+        opacity: 1;
     }
 }
 
-@keyframes flash-fade-out {
+/* Fade-out */
+@keyframes flash-hide {
     to {
         opacity: 0;
-        transform: translateX(10px);
+        transform: translateX(8px);
     }
 }
-

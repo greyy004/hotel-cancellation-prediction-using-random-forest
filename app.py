@@ -227,7 +227,9 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if "user_id" not in session:
             flash("Please login first.", "warning")
-            return redirect(url_for("login"))
+            # Preserve the current URL as return URL
+            next_url = request.url
+            return redirect(url_for("login", next=next_url))
         return f(*args, **kwargs)
     return decorated
 
@@ -606,6 +608,46 @@ def landing():
     conn.close()
     return render_template("landing.html", available_rooms=available_rooms)
 
+@app.route("/view_room/<int:room_id>")
+def view_room(room_id):
+    """Show room details - no login required"""
+    conn = get_db_connection()
+    room = conn.execute("""
+        SELECT r.room_id, r.room_number, r.price_per_night, t.room_type_name, t.image_path, t.description
+        FROM rooms r
+        JOIN room_types t ON r.room_type_id = t.room_type_id
+        WHERE r.room_id=?
+    """, (room_id,)).fetchone()
+    
+    if not room:
+        flash("Room not found!", "danger")
+        conn.close()
+        return redirect(url_for("landing"))
+    
+    # Fetch meal plans
+    meal_plans = conn.execute("SELECT * FROM meal_plans").fetchall()
+    
+    # Precompute unavailable ranges for display
+    booked_rows = conn.execute("""
+        SELECT arrival_year, arrival_month, arrival_date,
+               total_nights, no_of_weekend_nights, no_of_week_nights
+        FROM bookings
+        WHERE room_id = ? AND booking_status = 'Not_Canceled'
+    """, (room_id,)).fetchall()
+    conn.close()
+    
+    unavailable_ranges = []
+    for r in booked_rows:
+        start, end, total_nights = booking_window_from_row(r)
+        if total_nights <= 0:
+            continue
+        unavailable_ranges.append({
+            "start": start.isoformat(),
+            "end": end.isoformat()
+        })
+    
+    return render_template("view_room.html", room=room, meal_plans=meal_plans, unavailable_ranges=unavailable_ranges)
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -652,9 +694,13 @@ def login():
             session["is_admin"] = bool(user["is_admin"])
             session["user_name"] = user["name"]
             flash("Login successful!", "success")
+            # Check for return URL
+            next_url = request.args.get("next") or request.form.get("next")
+            if next_url:
+                return redirect(next_url)
             return redirect(url_for("admin_dashboard" if user["is_admin"] else "user_dashboard"))
         flash("Invalid credentials", "danger")
-    return render_template("login.html")
+    return render_template("login.html", next=request.args.get("next"))
 
 @app.route("/user_dashboard")
 @login_required
@@ -662,7 +708,6 @@ def user_dashboard():
     if session.get("is_admin"):
         flash("User access required.", "danger")
         return redirect(url_for("admin_dashboard"))
-    session.pop('_flashes', None)
     conn = get_db_connection()
     available_rooms = conn.execute("""
         SELECT t1.*, t2.image_path, t2.room_type_name, t2.description
@@ -1037,34 +1082,128 @@ def manage_meal_plans():
     return render_template("manage_meal_plans.html", meal_plans=meal_plans)
 
 
-@app.route("/admin/delete_meal_plan/<int:meal_id>", methods=["POST"])
+@app.route("/admin/delete_meal_plan/<int:meal_id>", methods=["GET", "POST"])
 @admin_required
 def delete_meal_plan(meal_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
 
-    # Get image filename for deletion
-    row = cursor.execute(
-        "SELECT image_path FROM meal_plans WHERE meal_plan_id = ?",
+    # Check if meal plan exists
+    meal_plan = conn.execute(
+        "SELECT meal_plan_id, meal_plan_name, image_path FROM meal_plans WHERE meal_plan_id = ?",
         (meal_id,)
     ).fetchone()
 
-    # Delete image file
-    if row and row["image_path"]:
-        img_path = os.path.join(MENU_PLAN_UPLOAD_FOLDER, row["image_path"])
-        if os.path.exists(img_path):
-            os.remove(img_path)
+    if not meal_plan:
+        flash("Meal plan not found!", "danger")
+        conn.close()
+        return redirect(url_for("manage_meal_plans"))
 
-    # Delete DB row
-    cursor.execute(
-        "DELETE FROM meal_plans WHERE meal_plan_id = ?",
+    # Check if there are any bookings using this meal plan
+    bookings_count = conn.execute(
+        "SELECT COUNT(*) FROM bookings WHERE meal_plan_id = ?",
         (meal_id,)
-    )
+    ).fetchone()[0]
 
-    conn.commit()
-    conn.close()
+    # If GET request and has bookings, show reassignment page
+    if request.method == "GET" and bookings_count > 0:
+        # Get all other meal plans for reassignment
+        other_meal_plans = conn.execute(
+            "SELECT meal_plan_id, meal_plan_name FROM meal_plans WHERE meal_plan_id != ? ORDER BY meal_plan_name",
+            (meal_id,)
+        ).fetchall()
+        conn.close()
+        
+        if not other_meal_plans:
+            flash("Cannot delete: This meal plan is used in bookings and there are no other meal plans to reassign to.", "danger")
+            return redirect(url_for("manage_meal_plans"))
+        
+        return render_template("delete_meal_plan_confirm.html", 
+                             meal_plan=meal_plan, 
+                             bookings_count=bookings_count,
+                             other_meal_plans=other_meal_plans)
 
-    flash("Meal plan deleted!", "success")
+    # Handle POST request (actual deletion)
+    if request.method == "POST":
+        reassign_to = request.form.get("reassign_to")
+        
+        # If bookings exist, reassign them
+        if bookings_count > 0:
+            if not reassign_to:
+                flash("Please select a meal plan to reassign bookings to.", "danger")
+                conn.close()
+                return redirect(url_for("delete_meal_plan", meal_id=meal_id))
+            
+            # Verify reassign_to meal plan exists
+            reassign_plan = conn.execute(
+                "SELECT meal_plan_id FROM meal_plans WHERE meal_plan_id = ?",
+                (reassign_to,)
+            ).fetchone()
+            
+            if not reassign_plan:
+                flash("Selected meal plan not found!", "danger")
+                conn.close()
+                return redirect(url_for("delete_meal_plan", meal_id=meal_id))
+            
+            # Reassign bookings
+            conn.execute(
+                "UPDATE bookings SET meal_plan_id = ? WHERE meal_plan_id = ?",
+                (reassign_to, meal_id)
+            )
+
+        try:
+            # Delete image file
+            if meal_plan["image_path"]:
+                img_path = os.path.join(MENU_PLAN_UPLOAD_FOLDER, meal_plan["image_path"])
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+
+            # Delete DB row
+            conn.execute(
+                "DELETE FROM meal_plans WHERE meal_plan_id = ?",
+                (meal_id,)
+            )
+
+            conn.commit()
+            if bookings_count > 0:
+                flash(f"Meal plan deleted successfully! {bookings_count} booking(s) reassigned.", "success")
+            else:
+                flash("Meal plan deleted successfully!", "success")
+        except sqlite3.IntegrityError as e:
+            conn.rollback()
+            flash(f"Cannot delete meal plan: {str(e)}", "danger")
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error deleting meal plan: {str(e)}", "danger")
+        finally:
+            conn.close()
+
+        return redirect(url_for("manage_meal_plans"))
+    
+    # If no bookings, proceed with deletion directly
+    try:
+        # Delete image file
+        if meal_plan["image_path"]:
+            img_path = os.path.join(MENU_PLAN_UPLOAD_FOLDER, meal_plan["image_path"])
+            if os.path.exists(img_path):
+                os.remove(img_path)
+
+        # Delete DB row
+        conn.execute(
+            "DELETE FROM meal_plans WHERE meal_plan_id = ?",
+            (meal_id,)
+        )
+
+        conn.commit()
+        flash("Meal plan deleted successfully!", "success")
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        flash(f"Cannot delete meal plan: {str(e)}", "danger")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error deleting meal plan: {str(e)}", "danger")
+    finally:
+        conn.close()
+
     return redirect(url_for("manage_meal_plans"))
 
 

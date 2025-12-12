@@ -72,7 +72,7 @@
 
                         <div class="meal-img-container">
                             {% if m.image_path %}
-                            <img src="{{ url_for('static', filename='uploads/rooms/' + m.image_path) }}"
+                            <img src="{{ url_for('static', filename='uploads/menu_plans/' + m.image_path) }}"
                                 alt="{{ m.meal_plan_name }}" class="meal-img">
                             {% else %}
                             <div class="meal-icon">🍽️</div>
@@ -83,8 +83,8 @@
                             <h3>{{ m.meal_plan_name }}</h3>
 
                             <div class="meal-actions">
-                                <a href="{{ url_for('delete_meal_plan', meal_id=m.meal_plan_id) }}"
-                                    onclick="return confirm('Delete this meal plan?')" class="btn-delete">Delete</a>
+                                <a href="{{ url_for('delete_meal_plan', meal_id=m.meal_plan_id) }}" 
+                                   class="btn-delete">Delete</a>
                             </div>
                         </div>
 
